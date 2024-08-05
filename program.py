@@ -14,6 +14,7 @@ class Program:
                 for i in range(self.size):
                     for j in range(self.size):
                         if "A" in self.map[i][j]:
+                            self.map[i][j].pop(self.map[i][j].index("A"))
                             self.map[i][j].append("-")
                             self.agentLocation = (i, j)
                         if "W" in self.map[i][j]:
@@ -23,7 +24,7 @@ class Program:
                         if "P_G" in self.map[i][j]:
                             self.assignValue("W_H", i, j)
                         if "H_P" in self.map[i][j]:
-                            self.assignValue("G", i, j)
+                            self.assignValue("G_L", i, j)
                 for i in range(self.size):
                     for j in range(self.size):
                         if len(self.map[i][j]) > 1 and "-" in self.map[i][j]:
@@ -49,29 +50,68 @@ class Program:
         deleteCell = []
         if "W" in self.map[row][col]:
             self.map[row][col].pop(self.map[row][col].index("W"))
-            if "W" in self.map[row][col]:
-                return "SCREAM", deleteCell
+            if len(self.map[row][col]) == 0:
+                self.map[row][col].append("-")
             if row + 1 < self.size:
                 self.map[row + 1][col].pop(self.map[row + 1][col].index("S"))
                 if len(self.map[row + 1][col]) == 0:
                     self.map[row + 1][col].append("-")
                 deleteCell.append((row + 1, col))
             if col + 1 < self.size:
-                self.map[row + 1][col].pop(self.map[row][col + 1].index("S"))
+                self.map[row][col + 1].pop(self.map[row][col + 1].index("S"))
                 if len(self.map[row][col + 1]) == 0:
                     self.map[row][col + 1].append("-")
                 deleteCell.append((row, col + 1))
             if row - 1 >= 0:
-                self.map[row + 1][col].pop(self.map[row - 1][col].index("S"))
+                self.map[row - 1][col].pop(self.map[row - 1][col].index("S"))
                 if len(self.map[row - 1][col]) == 0:
                     self.map[row - 1][col].append("-")
                 deleteCell.append((row - 1, col))
             if col - 1 >= 0:
-                self.map[row + 1][col].pop(self.map[row][col - 1].index("S"))
+                self.map[row][col - 1].pop(self.map[row][col - 1].index("S"))
                 if len(self.map[row][col - 1]) == 0:
                     self.map[row][col - 1].append("-")
                 deleteCell.append((row, col - 1))
             return "SCREAM", deleteCell
         return "", deleteCell
       
+    def agentGrabGold(self, cell):
+        row, col = cell
+        deleteCell = []
+        if "G" in self.map[row][col]:
+            self.map[row][col].pop(self.map[row][col].index("G"))
+            if len(self.map[row][col]) == 0:
+                self.map[row][col].append("-")
+    
+    def agentGrabHP(self, cell):
+        row, col = cell
+        deleteCell = []
+        if "H_P" in self.map[row][col]:
+            self.map[row][col].pop(self.map[row][col].index("H_P"))
+            if len(self.map[row][col]) == 0:
+                self.map[row][col].append("-")
+            if row + 1 < self.size:
+                self.map[row + 1][col].pop(self.map[row + 1][col].index("G_L"))
+                if len(self.map[row + 1][col]) == 0:
+                    self.map[row + 1][col].append("-")
+                deleteCell.append((row + 1, col))
+            if col + 1 < self.size:
+                self.map[row][col + 1].pop(self.map[row][col + 1].index("G_L"))
+                if len(self.map[row][col + 1]) == 0:
+                    self.map[row][col + 1].append("-")
+                deleteCell.append((row, col + 1))
+            if row - 1 >= 0:
+                self.map[row - 1][col].pop(self.map[row - 1][col].index("G_L"))
+                if len(self.map[row - 1][col]) == 0:
+                    self.map[row - 1][col].append("-")
+                deleteCell.append((row - 1, col))
+            if col - 1 >= 0:
+                self.map[row][col - 1].pop(self.map[row][col - 1].index("G_L"))
+                if len(self.map[row][col - 1]) == 0:
+                    self.map[row][col - 1].append("-")
+                deleteCell.append((row, col - 1))
+            return deleteCell
+        return deleteCell
+    
+    
 # print(Program().StartingStateRepresentation())

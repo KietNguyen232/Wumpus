@@ -45,12 +45,34 @@ ExistHP = ForAll([x, y],
     GL(x, y) == Exists([x1, y1], And(Adjacent(x, y, x1, y1), HP(x1, y1)))
 )
 
-BlankCell = ForAll([x, y], Implies(BLANK(x, y), And(Not(P(x, y)), Not(W(x, y)), Not(PG(x, y)), Not(HP(x, y)), Not(G(x, y)))))
+BlankCell = ForAll([x, y], Implies(BLANK(x, y), 
+                                   And(
+                                       Not(P(x, y)), Not(W(x, y)), Not(PG(x, y)), Not(HP(x, y)), Not(G(x, y)),
+                                       Not(B(x, y)), Not(S(x, y)), Not(WH(x, y)), Not(GL(x, y))
+                                    )))
 
 # Create Knowledge base for solving FOL
 KB.add(ExistW, ExistP, ExistPG, ExistHP, BlankCell)
 
-def check(sentence, kb=deepcopy(KB)):
+def check(AgentKB, exploredCell, sentence, kb=deepcopy(KB)):
+    obj = {
+        "-": BLANK,
+        "P": P,
+        "W": W,
+        "P_G": PG,
+        "H_P": HP,
+        "S": S,
+        "B": B,
+        "W_H": WH,
+        "G_L": GL,
+        "G": G
+    }
+    for key in AgentKB.key():
+        for cell in exploredCell:
+            if cell in AgentKB[key]:
+                kb.add(obj[key](cell[0], cell[1]))
+            else:
+                kb.add(Not(obj[key](cell[0], cell[1])))
     kb.add(sentence)
     return kb.check() == sat
 

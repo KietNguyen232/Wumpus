@@ -23,9 +23,16 @@ class Agent:
         }
         self.inventory = []
         for item in self.map[self.start[0]][self.start[1]]:
-            self.KB[item] = self.start
+            self.KB[item].append(self.start)
         self.agentLocation = self.start
         self.agentDirection = DIRECTION[0]
+        self.agentHP = 100
+    
+    def updatePercept(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.agentPercept[i][j] is not None:
+                    self.agentPercept[i][j] = self.WumpusWorld.map[i][j]
     
     def turnRight(self):
         i = DIRECTION.index(self.agentDirection)
@@ -45,21 +52,63 @@ class Agent:
             return True
         return False
     
-    # This one is not finished yet.
     def shoot(self):
         temp = (self.agentLocation[0] + self.agentDirection[0], self.agentLocation[1] + self.agentDirection[1])
-        if temp[0] >= 0 and temp[0] < self.size and temp[1] > 0 and temp[1] < self.size:
+        if temp[0] >= 0 and temp[0] < self.size and temp[1] >= 0 and temp[1] < self.size:
             result, cell = self.WumpusWorld.AgentShoot(temp)
             if result == "SCREAM":
-                if len(cell) > 0:
-                    for item in cell:
-                        if item in self.KB["S"]:
-                            self.KB["S"].pop(self.KB["S"].index(item))
+                self.updatePercept()
+                for item in cell:
+                    if item in self.KB["S"]:
+                        self.KB["S"].pop(self.KB["S"].index(item))
+                if len(self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]) == 1 and \
+                    "-" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
+                    self.KB["-"].append(self.agentLocation)
     
     def grab(self):
-        pass
+        if "G" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
+            self.inventory.append("G")
+            self.WumpusWorld.agentGrabGold(self.agentLocation)
+            self.updatePercept()
+            self.KB["G"].pop(self.KB["G"].index(self.agentLocation))
+            if len(self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]) == 1 and \
+                "-" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
+                self.KB["-"].append(self.agentLocation)
+                
+        if "H_P" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
+            self.inventory.append("H_P")
+            cell = self.WumpusWorld.agentGrabHP(self.agentLocation)
+            if len(cell) > 0:
+                self.updatePercept()
+                for item in cell:
+                    if item in self.KB["G_L"]:
+                        self.KB["G_L"].pop(self.KB["G_L"].index(item))
+                if len(self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]) == 1 and \
+                    "-" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
+                    self.KB["-"].append(self.agentLocation)
+    
+    def useHealingPotion(self):
+        if "H_P" in self.inventory:
+            self.agentHP = min(100, self.agentHP + 25)
+            self.inventory.pop(self.inventory.index("H_P"))
 
-A = Agent()
-A.move()
-A.shoot()
-print(A.KB)
+    def agentLogic(self):
+        pass
+# A = Agent()
+# A.move()
+# A.shoot()
+# A.move()
+# A.turnRight()
+# A.move()
+# print(A.KB)
+# print(A.agentPercept)
+# print(A.WumpusWorld.map)
+# print(A.inventory)
+# A.grab()
+# print(A.KB)
+# print(A.agentPercept)
+# print(A.WumpusWorld.map)
+# print(A.inventory)
+# A.useHealingPotion()
+# print(A.inventory)
+# print(A.agentHP)
