@@ -19,7 +19,7 @@ class Agent:
             "B": [],
             "W_H": [],
             "G_L": [],
-            "G": [],
+            "G": [],        
         }
         self.inventory = []
         for item in self.map[self.start[0]][self.start[1]]:
@@ -27,6 +27,7 @@ class Agent:
         self.agentLocation = self.start
         self.agentDirection = DIRECTION[0]
         self.agentHP = 100
+        self.explored = [self.start]
     
     def updatePercept(self):
         for i in range(self.size):
@@ -46,6 +47,7 @@ class Agent:
         temp = (self.agentLocation[0] + self.agentDirection[0], self.agentLocation[1] + self.agentDirection[1])
         if temp[0] >= 0 and temp[0] < self.size and temp[1] >= 0 and temp[1] < self.size:
             self.agentLocation = temp
+            self.explored.append(temp)
             self.agentPercept[temp[0]][temp[1]] = self.WumpusWorld.map[temp[0]][temp[1]]
             for item in self.WumpusWorld.map[temp[0]][temp[1]]:
                 self.KB[item].append(temp)
@@ -64,6 +66,8 @@ class Agent:
                 if len(self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]) == 1 and \
                     "-" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
                     self.KB["-"].append(self.agentLocation)
+                return True
+            return False
     
     def grab(self):
         if "G" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
@@ -75,7 +79,7 @@ class Agent:
                 "-" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
                 self.KB["-"].append(self.agentLocation)
                 
-        if "H_P" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
+        elif "H_P" in self.agentPercept[self.agentLocation[0]][self.agentLocation[1]]:
             self.inventory.append("H_P")
             cell = self.WumpusWorld.agentGrabHP(self.agentLocation)
             if len(cell) > 0:
@@ -93,22 +97,20 @@ class Agent:
             self.inventory.pop(self.inventory.index("H_P"))
 
     def agentLogic(self):
-        pass
-# A = Agent()
-# A.move()
-# A.shoot()
-# A.move()
-# A.turnRight()
-# A.move()
-# print(A.KB)
-# print(A.agentPercept)
-# print(A.WumpusWorld.map)
-# print(A.inventory)
-# A.grab()
-# print(A.KB)
-# print(A.agentPercept)
-# print(A.WumpusWorld.map)
-# print(A.inventory)
-# A.useHealingPotion()
-# print(A.inventory)
-# print(A.agentHP)
+        threatCell = []
+        action = []
+        while True:
+            r, c = self.agentLocation[0] + self.agentDirection[0], self.agentLocation[1] + self.agentDirection[1]
+            Wumpus = check(self.KB, "S", self.explored, W(r, c))
+            Pit = check(self.KB, "B", self.explored, P(r, c))
+            Gas = check(self.KB, "W_H", self.explored, PG(r, c))
+            print(Wumpus, Pit, Gas)
+            if not Pit and not Wumpus and not Gas:
+                action.append((self.agentLocation, "move forward"))
+                self.move()
+            a = input()
+            
+            
+            
+A = Agent()
+A.agentLogic()
