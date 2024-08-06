@@ -16,7 +16,6 @@ PG = Function('poisonous_gas', IntSort(), IntSort(), BoolSort())
 WH = Function('whiff', IntSort(), IntSort(), BoolSort())
 HP = Function('healing_potion', IntSort(), IntSort(), BoolSort())
 GL = Function('glow', IntSort(), IntSort(), BoolSort())
-BLANK = Function('blank_cell', IntSort(), IntSort(), BoolSort())
 
 # Define clauses
 def Adjacent(x1, y1, x2, y2):
@@ -29,34 +28,23 @@ def Adjacent(x1, y1, x2, y2):
       )
   )
 
-ExistW = ForAll([x, y],
-    S(x, y) == Exists([x1, y1], And(Adjacent(x, y, x1, y1), W(x1, y1)))
-)
+ExistW = ForAll([x, y], Implies(S(x, y), Exists([x1, y1], And(Adjacent(x, y, x1, y1), W(x1, y1)))))
+ExistS = ForAll([x, y, x1, y1], Implies(And(W(x, y), Adjacent(x, y, x1, y1)), S(x1, y1)))
 
-ExistP = ForAll([x, y],
-    B(x, y) == Exists([x1, y1], And(Adjacent(x, y, x1, y1), P(x1, y1)))
-)
+ExistP = ForAll([x, y], Implies(B(x, y), Exists([x1, y1], And(Adjacent(x, y, x1, y1), P(x1, y1)))))
+ExistB = ForAll([x, y, x1, y1], Implies(And(P(x, y), Adjacent(x, y, x1, y1)), B(x1, y1)))
 
-ExistPG = ForAll([x, y],
-    WH(x, y) == Exists([x1, y1], And(Adjacent(x, y, x1, y1), PG(x1, y1)))
-)
+ExistPG = ForAll([x, y], Implies(WH(x, y), Exists([x1, y1], And(Adjacent(x, y, x1, y1), PG(x1, y1)))))
+ExistWH = ForAll([x, y, x1, y1], Implies(And(PG(x, y), Adjacent(x, y, x1, y1)), WH(x1, y1)))
 
-ExistHP = ForAll([x, y],
-    GL(x, y) == Exists([x1, y1], And(Adjacent(x, y, x1, y1), HP(x1, y1)))
-)
+ExistHP = ForAll([x, y], Implies(GL(x, y), Exists([x1, y1], And(Adjacent(x, y, x1, y1), HP(x1, y1)))))
+ExistGL = ForAll([x, y, x1, y1], Implies(And(HP(x, y), Adjacent(x, y, x1, y1)), GL(x1, y1)))
 
-BlankCell = ForAll([x, y], Implies(BLANK(x, y), 
-                                   And(
-                                       Not(P(x, y)), Not(W(x, y)), Not(PG(x, y)), Not(HP(x, y)), Not(G(x, y)),
-                                       Not(B(x, y)), Not(S(x, y)), Not(WH(x, y)), Not(GL(x, y))
-                                    )))
-
-# Create Knowledge base for solving FOL
-KB.add(ExistW, ExistP, ExistPG, ExistHP, BlankCell)
-
-def check(AgentKB, exploredCell, sentence, kb=deepcopy(KB)):
+def check(agentKB, key, exploredCell, sentence):
+    kb = Solver()
+    kb.reset()
+    kb.add(ExistW, ExistP, ExistPG, ExistHP, ExistB, ExistS, ExistWH, ExistGL)
     obj = {
-        "-": BLANK,
         "P": P,
         "W": W,
         "P_G": PG,
@@ -67,15 +55,11 @@ def check(AgentKB, exploredCell, sentence, kb=deepcopy(KB)):
         "G_L": GL,
         "G": G
     }
-    for key in AgentKB.key():
-        for cell in exploredCell:
-            if cell in AgentKB[key]:
-                kb.add(obj[key](cell[0], cell[1]))
-            else:
-                kb.add(Not(obj[key](cell[0], cell[1])))
+    for cell in exploredCell:
+        if cell in agentKB[key]:
+            kb.add(obj[key](cell[0], cell[1]))
+        else:
+            kb.add(Not(obj[key](cell[0], cell[1])))
     kb.add(sentence)
     return kb.check() == sat
 
-# check_list = [B(1, 0), Not(B(0, 1)), S(0, 1), Not(S(1, 0)), P(1, 1)]
-# check_list = [P(1, 1), W(1, 1)]
-# print(check(check_list))
