@@ -9,7 +9,6 @@ x, y = Ints('x y')
 x1, y1 = Ints('x1 y1')
 W = Function('wumpus', IntSort(), IntSort(), BoolSort())
 P = Function('pit', IntSort(), IntSort(), BoolSort())
-G = Function('gold', IntSort(), IntSort(), BoolSort())
 S = Function('stench', IntSort(), IntSort(), BoolSort())
 B = Function('breeze', IntSort(), IntSort(), BoolSort())
 PG = Function('poisonous_gas', IntSort(), IntSort(), BoolSort())
@@ -43,8 +42,7 @@ ExistGL = ForAll([x, y, x1, y1], Implies(And(HP(x, y), Adjacent(x, y, x1, y1)), 
 def check(agentKB, key, exploredCell, sentence):
     kb = Solver()
     kb.reset()
-    kb.add(ExistW, ExistP, ExistPG, ExistHP, ExistB, ExistS, ExistWH, ExistGL)
-    obj = {
+    sign = {
         "P": P,
         "W": W,
         "P_G": PG,
@@ -53,13 +51,20 @@ def check(agentKB, key, exploredCell, sentence):
         "B": B,
         "W_H": WH,
         "G_L": GL,
-        "G": G
     }
+    obj = {
+        "S": [W, ExistW, ExistS],
+        "B": [P, ExistB, ExistP],
+        "G_L": [HP, ExistHP, ExistGL],
+        "W_H": [PG, ExistPG, ExistWH]
+    }
+    kb.add(obj[key][1:])
     for cell in exploredCell:
+        kb.add(Not(obj[key][0](cell[0], cell[1])))
         if cell in agentKB[key]:
-            kb.add(obj[key](cell[0], cell[1]))
+            kb.add(sign[key](cell[0], cell[1]))
         else:
-            kb.add(Not(obj[key](cell[0], cell[1])))
+            kb.add(Not(sign[key](cell[0], cell[1])))
     kb.add(sentence)
     return kb.check() == sat
 
