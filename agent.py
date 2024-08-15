@@ -118,7 +118,7 @@ class Agent:
             if result == "SCREAM":
                 print("SCREAM")
                 self.updatePercept()
-                for item in cell:   
+                for item in cell:
                     if item in self.KB["S"]:
                         self.KB["S"].pop(self.KB["S"].index(item))
                     if self.agentPercept[item[0]][item[1]] == ['-']:
@@ -267,7 +267,7 @@ class Agent:
             self.countMove = 1
 
 ##        if 'P' in self.map[self.agentLocation[0]][self.agentLocation[1]] or 'W' in self.map[self.agentLocation[0]][self.agentLocation[1]] or ('P_G' in self.map[self.agentLocation[0]][self.agentLocation[1]] and self.agentHP <= 25):
-        if 'P' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
+        if 'P' in self.map[self.agentLocation[0]][self.agentLocation[1]] or 'W' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
             print(self.agentLocation, 'died')
             self.score -= 10000
             return False
@@ -495,7 +495,9 @@ class Agent:
                     self.canMoveCount()
                     self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
                     self.countMove = 1
-            
+                    
+        #if 'P_G' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
+        
         if self.countMove >= len(self.predictPath):
             return False
         return True
