@@ -267,6 +267,21 @@ class Agent:
             self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
             self.countMove = 1
 
+        checkflag = False
+        for idx in range(len(self.unexploreWumpus)):
+            if self.agentLocation in self.unexploreWumpus[idx]:
+                r, c = self.PerceptWumpus[idx][0], self.PerceptWumpus[idx][1]
+                if not check(self.KB, "B", self.explored, P(r, c)):
+                    print('check', (r, c), 'do not have wumput')
+                    self.unexploreWumpus.pop(idx)
+                    self.PerceptWumpus.pop(idx)
+                    self.predictMap[r][c] = 0
+                    checkflag = True
+        if checkflag:
+            self.canMoveCount()
+            self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+            self.countMove = 1
+        
         if len(self.potemp) > 0:
             for _ in range(len(self.potemp)):
                 rev = self.potemp.pop()
@@ -275,8 +290,7 @@ class Agent:
             self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
             self.countMove = 1
 
-##        if 'P' in self.map[self.agentLocation[0]][self.agentLocation[1]] or 'W' in self.map[self.agentLocation[0]][self.agentLocation[1]] or ('P_G' in self.map[self.agentLocation[0]][self.agentLocation[1]] and self.agentHP <= 25):
-        if 'P' in self.map[self.agentLocation[0]][self.agentLocation[1]] or 'W' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
+        if 'P' in self.map[self.agentLocation[0]][self.agentLocation[1]] or 'W' in self.map[self.agentLocation[0]][self.agentLocation[1]] or ('P_G' in self.map[self.agentLocation[0]][self.agentLocation[1]] and self.agentHP <= 25):
             print(self.agentLocation, 'died')
             self.score -= 10000
             return False
@@ -288,12 +302,12 @@ class Agent:
             print(self.agentLocation, 'grap potion')
             self.grab()
         
-##        if 'P_G' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
-##            print(self.agentLocation, 'get poisoning')
-##            self.agentHP -= 25
-##        if self.agentHP <= 25 and self.potion > 0:
-##            print(self.agentLocation, 'use healing potion')
-##            self.useHealingPotion()
+        if 'P_G' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
+            print(self.agentLocation, 'get poisoning')
+            self.agentHP -= 25
+        if self.agentHP <= 25 and self.potion > 0:
+            print(self.agentLocation, 'use healing potion')
+            self.useHealingPotion()
 
         if 'B' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
             for i in range(4):
@@ -368,7 +382,8 @@ class Agent:
                 self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
                 self.countMove = 1
 
-        #if W_H' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
+        if 'W_H' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
+            print('wtf')
         
         if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
             r, c = self.predictPath[self.countMove]
