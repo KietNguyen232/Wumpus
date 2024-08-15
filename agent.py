@@ -83,17 +83,18 @@ class Agent:
     def move(self):
         temp = self.predictPath[self.countMove]
         newDirection = (temp[0] - self.agentLocation[0], temp[1] - self.agentLocation[1])
-        if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
-            print(self.agentLocation, 'turn right')
-            self.turnRight()
-        elif newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 3) % 4]:
-            print(self.agentLocation, 'turn left')
-            self.turnLeft()
-        elif newDirection[0] + newDirection[1] + self.agentDirection[0] + self.agentDirection[1] == 0:
-            print(self.agentLocation, 'turn right')
-            self.turnRight()
-            print(self.agentLocation, 'turn right')
-            self.turnRight()
+        if newDirection != self.agentDirection:
+            if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
+                print(self.agentLocation, 'turn right')
+                self.turnRight()
+            elif newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 3) % 4]:
+                print(self.agentLocation, 'turn left')
+                self.turnLeft()
+            elif newDirection[0] + newDirection[1] + self.agentDirection[0] + self.agentDirection[1] == 0:
+                print(self.agentLocation, 'turn right')
+                self.turnRight()
+                print(self.agentLocation, 'turn right')
+                self.turnRight()
         if temp[0] >= 0 and temp[0] < self.size and temp[1] >= 0 and temp[1] < self.size:
             print(self.agentLocation, 'move foward')
             self.agentLocation = temp
@@ -112,6 +113,7 @@ class Agent:
         temp = (self.agentLocation[0] + self.agentDirection[0], self.agentLocation[1] + self.agentDirection[1])
         if temp[0] >= 0 and temp[0] < self.size and temp[1] >= 0 and temp[1] < self.size:
             self.score -= 100
+            print(self.agentLocation, 'shoot')
             result, cell = self.WumpusWorld.AgentShoot(temp)
             if result == "SCREAM":
                 self.updatePercept()
@@ -307,25 +309,134 @@ class Agent:
             self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
             self.countMove = 1
 
-##        if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
-##            r, c = self.predictPath[self.countMove]
-##            if check(self.KB, "S", self.explored, W(r, c)):
-##                if not check(self.KB, "S", self.explored, Not(W(r, c))):
-##                    for _ in range(3):
-##                        self.shoot():
-##                else:
-##                
-##                shootflag = True
-##                for _ in range(3):
-##                    if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and check(self.KB, "S", self.explored, W(r, c)):
-##                        shootflag = self.shoot():
-##                        if not shootflag:
-##                            break
-##                if 'S' in 
-##                
-##                self.canMoveCount()
-##                self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
-##                self.countMove = 1
+        if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
+            r, c = self.predictPath[self.countMove]
+            shootflag = True
+            print(r, c)
+            print(check(self.KB, 'S', self.explored, Not(W(r, c))))
+            for _ in range(3):
+                if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and not check(self.KB, 'S', self.explored, Not(W(r, c))):
+                    newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
+                    if newDirection != self.agentDirection:
+                        if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
+                            print(self.agentLocation, 'turn right')
+                            self.turnRight()
+                        elif newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 3) % 4]:
+                            print(self.agentLocation, 'turn left')
+                            self.turnLeft()
+                        elif newDirection[0] + newDirection[1] + self.agentDirection[0] + self.agentDirection[1] == 0:
+                            print(self.agentLocation, 'turn right')
+                            self.turnRight()
+                            print(self.agentLocation, 'turn right')
+                            self.turnRight()
+                    shootflag = self.shoot()
+                    if shootflag == False:
+                        break
+                else:
+                    break
+            print(check(self.KB, 'S', self.explored, W(r, c)))
+            if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                if not check(self.KB, 'S', self.explored, Not(W(r, c))):
+                    self.PerceptWumpus.append((r, c))
+                    self.unexploreWumpus.append([])
+                    self.predictMap[r][c] = -1
+                    while self.predictMap[r][c] != -1:
+                        self.canMoveCount()
+                        self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+                        self.countMove = 1
+                        r, c = self.predictPath[self.countMove]
+                        shootflag = True
+                        for _ in range(3):
+                            if check(self.KB, 'S', self.explored, W(r, c)):
+                                newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
+                                if newDirection != self.agentDirection:
+                                    if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
+                                        print(self.agentLocation, 'turn right')
+                                        self.turnRight()
+                                    elif newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 3) % 4]:
+                                        print(self.agentLocation, 'turn left')
+                                        self.turnLeft()
+                                    elif newDirection[0] + newDirection[1] + self.agentDirection[0] + self.agentDirection[1] == 0:
+                                        print(self.agentLocation, 'turn right')
+                                        self.turnRight()
+                                        print(self.agentLocation, 'turn right')
+                                        self.turnRight()
+                                shootflag = self.shoot()
+                                if shootflag == False:
+                                    break
+                            else:
+                                break
+                        if shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                            self.PerceptWumpus.append((r, c))
+                            self.unexploreWumpus.append([])
+                            self.predictMap[r][c] = -1
+                else:
+                    for i in range(4):
+                        ri, ci = self.agentLocation[0] + DIRECTION[i][0], self.agentLocation[1] + DIRECTION[i][1]
+                        if ri < 0 or ri >= self.size or ci < 0 or ci >= self.size:
+                            continue
+                        shootflag = True
+                        if (ri, ci) != (r, c):
+                            print(ri, ci)
+                            print(check(self.KB, 'S', self.explored, Not(W(ri, ci))))
+                            if not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
+                                for _ in range(3):
+                                    if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
+                                        newDirection = (ri - self.agentLocation[0], ci - self.agentLocation[1])
+                                        if newDirection != self.agentDirection:
+                                            if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
+                                                print(self.agentLocation, 'turn right')
+                                                self.turnRight()
+                                            elif newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 3) % 4]:
+                                                print(self.agentLocation, 'turn left')
+                                                self.turnLeft()
+                                            elif newDirection[0] + newDirection[1] + self.agentDirection[0] + self.agentDirection[1] == 0:
+                                                print(self.agentLocation, 'turn right')
+                                                self.turnRight()
+                                                print(self.agentLocation, 'turn right')
+                                                self.turnRight()
+                                        shootflag = self.shoot()
+                                        if shootflag == False:
+                                            break
+                                    else:
+                                        break
+                                if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and shootflag and not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
+                                    self.PerceptWumpus.append((ri, ci))
+                                    self.unexploreWumpus.append([])
+                    if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and check(self.KB, 'S', self.explored, W(r, c)):
+                        shootflag = True
+                        for _ in range(3):
+                            if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and check(self.KB, 'S', self.explored, W(r, c)):
+                                newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
+                                if newDirection != self.agentDirection:
+                                    if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
+                                        print(self.agentLocation, 'turn right')
+                                        self.turnRight()
+                                    elif newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 3) % 4]:
+                                        print(self.agentLocation, 'turn left')
+                                        self.turnLeft()
+                                    elif newDirection[0] + newDirection[1] + self.agentDirection[0] + self.agentDirection[1] == 0:
+                                        print(self.agentLocation, 'turn right')
+                                        self.turnRight()
+                                        print(self.agentLocation, 'turn right')
+                                        self.turnRight()
+                                shootflag = self.shoot()
+                                if shootflag == False:
+                                    break
+                            else:
+                                break
+                        if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                            unexplore = []
+                            for u in range(2):
+                                for v in range(2):
+                                    if (u, v) not in self.countExplored:
+                                        unexplore.append((u, v))
+                            self.PerdictWumpus.append((r, c))
+                            self.unexploreWumpus.append(unexplore)
+                            self.predictMap[r][c] = -1
+                    self.canMoveCount()
+                    self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+                    self.countMove = 1
             
         if self.countMove >= len(self.predictPath):
             return False
@@ -458,6 +569,6 @@ while flag:
     flag = A.agentLogic()
 print(A.agentLocation, 'climb up')
 print('score', A.score)
-print(A.KB)
+#print(A.KB)
 print(A.agentPercept)
 a = input()
