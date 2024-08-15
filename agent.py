@@ -116,6 +116,7 @@ class Agent:
             print(self.agentLocation, 'shoot')
             result, cell = self.WumpusWorld.AgentShoot(temp)
             if result == "SCREAM":
+                print("SCREAM")
                 self.updatePercept()
                 for item in cell:   
                     if item in self.KB["S"]:
@@ -312,10 +313,9 @@ class Agent:
         if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]]:
             r, c = self.predictPath[self.countMove]
             shootflag = True
-            print(r, c)
-            print(check(self.KB, 'S', self.explored, Not(W(r, c))))
             for _ in range(3):
                 if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and not check(self.KB, 'S', self.explored, Not(W(r, c))):
+                    print('check', (r, c), 'has wumpus')
                     newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
                     if newDirection != self.agentDirection:
                         if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
@@ -334,9 +334,9 @@ class Agent:
                         break
                 else:
                     break
-            print(check(self.KB, 'S', self.explored, W(r, c)))
             if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
                 if not check(self.KB, 'S', self.explored, Not(W(r, c))):
+                    print('check', (r, c), 'still has wumpus')
                     self.PerceptWumpus.append((r, c))
                     self.unexploreWumpus.append([])
                     self.predictMap[r][c] = -1
@@ -348,6 +348,7 @@ class Agent:
                         shootflag = True
                         for _ in range(3):
                             if check(self.KB, 'S', self.explored, W(r, c)):
+                                print('check', (r, c), 'can has wumpus')
                                 newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
                                 if newDirection != self.agentDirection:
                                     if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
@@ -367,8 +368,20 @@ class Agent:
                             else:
                                 break
                         if shootflag and check(self.KB, 'S', self.explored, W(r, c)):
-                            self.PerceptWumpus.append((r, c))
-                            self.unexploreWumpus.append([])
+                            if not check(self.KB, 'S', self.explored, Not(W(r, c))):
+                                print('check', (r, c), 'still has wumpus')
+                                self.PerceptWumpus.append((r, c))
+                                self.unexploreWumpus.append([])
+                                self.predictMap[r][c] = -1
+                            else:
+                                print('check', (r, c), 'can has wumpus')
+                                unexplore = []
+                                for u in range(2):
+                                    for v in range(2):
+                                        if (u, v) not in self.countExplored:
+                                            unexplore.append((u, v))
+                            self.PerdictWumpus.append((r, c))
+                            self.unexploreWumpus.append(unexplore)
                             self.predictMap[r][c] = -1
                 else:
                     for i in range(4):
@@ -377,11 +390,10 @@ class Agent:
                             continue
                         shootflag = True
                         if (ri, ci) != (r, c):
-                            print(ri, ci)
-                            print(check(self.KB, 'S', self.explored, Not(W(ri, ci))))
                             if not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
                                 for _ in range(3):
                                     if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
+                                        print('check', (ri, ci), 'has wumpus')
                                         newDirection = (ri - self.agentLocation[0], ci - self.agentLocation[1])
                                         if newDirection != self.agentDirection:
                                             if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
@@ -401,12 +413,14 @@ class Agent:
                                     else:
                                         break
                                 if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and shootflag and not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
+                                    print('check', (ri, ci), 'still has wumpus')
                                     self.PerceptWumpus.append((ri, ci))
                                     self.unexploreWumpus.append([])
                     if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and check(self.KB, 'S', self.explored, W(r, c)):
                         shootflag = True
                         for _ in range(3):
                             if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and check(self.KB, 'S', self.explored, W(r, c)):
+                                print('check', (r, c), 'can has wumpus')
                                 newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
                                 if newDirection != self.agentDirection:
                                     if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
@@ -426,6 +440,7 @@ class Agent:
                             else:
                                 break
                         if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                            print('check', (r, c), 'can have wumpus')
                             unexplore = []
                             for u in range(2):
                                 for v in range(2):
@@ -434,6 +449,49 @@ class Agent:
                             self.PerdictWumpus.append((r, c))
                             self.unexploreWumpus.append(unexplore)
                             self.predictMap[r][c] = -1
+                            while self.predictMap[r][c] != -1:
+                                self.canMoveCount()
+                                self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+                                self.countMove = 1
+                                r, c = self.predictPath[self.countMove]
+                                shootflag = True
+                                for _ in range(3):
+                                    if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and check(self.KB, 'S', self.explored, W(r, c)):
+                                        print('check', (r, c), 'can has wumpus')
+                                        newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
+                                        if newDirection != self.agentDirection:
+                                            if newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 1) % 4]:
+                                                print(self.agentLocation, 'turn right')
+                                                self.turnRight()
+                                            elif newDirection == DIRECTION[(DIRECTION.index(self.agentDirection) + 3) % 4]:
+                                                print(self.agentLocation, 'turn left')
+                                                self.turnLeft()
+                                            elif newDirection[0] + newDirection[1] + self.agentDirection[0] + self.agentDirection[1] == 0:
+                                                print(self.agentLocation, 'turn right')
+                                                self.turnRight()
+                                                print(self.agentLocation, 'turn right')
+                                                self.turnRight()
+                                        shootflag = self.shoot()
+                                        if shootflag == False:
+                                            break
+                                    else:
+                                        break
+                                if 'S' in self.map[self.agentLocation[0]][self.agentLocation[1]] and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                                    if not check(self.KB, 'S', self.explored, Not(W(r, c))):
+                                        print('check', (r, c), 'still has wumpus')
+                                        self.PerceptWumpus.append((r, c))
+                                        self.unexploreWumpus.append([])
+                                        self.predictMap[r][c] = -1
+                                    else:
+                                        print('check', (r, c), 'can has wumpus')
+                                        unexplore = []
+                                        for u in range(2):
+                                            for v in range(2):
+                                                if (u, v) not in self.countExplored:
+                                                    unexplore.append((u, v))
+                                    self.PerdictWumpus.append((r, c))
+                                    self.unexploreWumpus.append(unexplore)
+                                    self.predictMap[r][c] = -1
                     self.canMoveCount()
                     self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
                     self.countMove = 1
