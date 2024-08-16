@@ -4,7 +4,7 @@ from logic import *
 DIRECTION = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 class Agent:
-    def __init__(self, inputFile="map1.txt"):
+    def __init__(self, inputFile="map2.txt"):
         self.WumpusWorld = Program(inputFile)
         _, self.start, self.size = self.WumpusWorld.StartingStateRepresentation()
         self.agentPercept = [[None for _ in range(self.size)] for _ in range(self.size)]
@@ -153,7 +153,7 @@ class Agent:
                 neighborX, neighborY = (curR + DIRECTION[i][0], curC + DIRECTION[i][1])
                 if neighborX < 0 or neighborX >= self.size or neighborY < 0 or neighborY >= self.size:
                     continue
-                if self.predictMap[neighborX][neighborY] != -1 and (neighborX, neighborY) not in visited:
+                if self.predictMap[neighborX][neighborY] >= 0 and (neighborX, neighborY) not in visited:
                     visited[(neighborX, neighborY)] = (curR, curC)
                     self.maxExplored += 1
                     queue.append((neighborX, neighborY))
@@ -165,8 +165,8 @@ class Agent:
         path.reverse()
         return path
 
-    def BFS(self, start, direction, agentHP, agentPotion):
-        if start == (self.size - 1, 0):
+    def BFS(self, start, end, direction, agentHP, agentPotion):
+        if start == end:
             return [start], 0, agentHP, agentPotion
         
         visited = {} 
@@ -203,11 +203,11 @@ class Agent:
                 if NcurH <= 0:
                     continue
                 NcurD = DIRECTION[i]
-                if self.predictMap[neighborX][neighborY] != -1 and ((neighborX, neighborY) not in visited or (neighborX, neighborY) in visited and NcurS < visited[(neighborX, neighborY)][1]):
+                if self.predictMap[neighborX][neighborY] >= 0 and ((neighborX, neighborY) not in visited or (neighborX, neighborY) in visited and NcurS < visited[(neighborX, neighborY)][1]):
                     visited[(neighborX, neighborY)] = ((curR, curC), NcurS)
-                    if (neighborX, neighborY) == (self.size - 1, 0):
+                    if (neighborX, neighborY) == end:
                         if NcurS < scoreTemp:
-                            pathTemp = self.trace(visited, start, (self.size - 1, 0))
+                            pathTemp = self.trace(visited, start, end)
                             scoreTemp = NcurS
                             hpTemp = NcurH
                             poTemp = NcurO
@@ -216,21 +216,27 @@ class Agent:
 
     def DFS(self, start, direction):
         goal = (self.size - 1, 0)
+        unexplored = []
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.predictMap[i][j] == 0:
+                    unexplored.append((i, j))
         path = [start]
         pathExplored = copy.deepcopy(self.explored)
         explored = len(pathExplored)
         score = 0
-##        level = 0
+        level = 0
         agentHP = self.agentHP
         agentPotion = self.potion
-        stack = [(start, explored, path, pathExplored, score, direction, agentHP, agentPotion)]
+        stack = [(start, explored, path, pathExplored, unexplored, score, direction, agentHP, agentPotion, level)]
         exploredTemp = 1
         scoreTemp = self.size * self.size * 30 * 2
         pathTemp = []
         while stack:
-            (curR, curC), curE, curP, curL, curS, curD, curH, curO = stack.pop()
+            #print(len(stack))
+            (curR, curC), curE, curP, curL, curU, curS, curD, curH, curO, curT = stack.pop(0)
 ##            print((curR, curC), curE, curP, curL, curS, curD, curH, curO)
-##            breakflag = False
+            breakflag = False
             if exploredTemp >= self.maxExplored:
                 if curE <= exploredTemp and curS >= scoreTemp:
                     continue
@@ -256,13 +262,45 @@ class Agent:
                     if flag:
                         continue
                     #delete to here
+                    NcurU = copy.deepcopy(curU)
+                    if len(NcurU) != 0:
+                        tScore = self.size * self.size * 30 * 2
+                        tPath = []
+                        tHP = curH
+                        tPotion = curO
+                        for Nunexplore in NcurU:
+                            NPath, NScore, NHP, NPotion = self.BFS((curR, curC), Nunexplore, curD, curH, curO)
+                            if NHP <= 0:
+                                continue
+                            if NScore < tScore:
+                                tPath = NPath
+                                tScore = NScore
+                                tHP = NHP
+                                tPotion = NPotion
+                        if tPath != []:
+                            neighborX, neighborY = tPath[-1]
+                            NcurL = copy.deepcopy(curL)
+                            NcurL.append(tPath[-1])
+                            NcurE = curE + 1
+                            NcurD = (tPath[-1][0] - tPath[-2][0], tPath[-1][1] - tPath[-2][1])
+                            NcurP = copy.deepcopy(curP)
+                            NcurP.pop()
+                            NcurP += tPath
+                            NcurS = curS + tScore
+                            NcurU.pop(NcurU.index(tPath[-1]))
+                            NcurT = len(NcurP) - 1
+                            stack.append(((neighborX, neighborY), NcurE, NcurP, NcurL, NcurU, NcurS, NcurD, tHP, tPotion, NcurT))
+                            breakflag = True
+                            break
                     NcurE = curE
                     NcurL = copy.deepcopy(curL)
                 elif (neighborX, neighborY) not in curL:
                     NcurE = curE + 1
                     NcurL = copy.deepcopy(curL)
                     NcurL.append((neighborX, neighborY))
-##                    breakflag = True
+                    NcurU = copy.deepcopy(curU)
+                    NcurU.pop(NcurU.index((neighborX, neighborY)))
+                    breakflag = True
                 if DIRECTION[i] == curD:
                     NcurS = curS + 10
                 elif DIRECTION[i][0] * curD[0] + DIRECTION[i][1] * curD[1] == 0:
@@ -282,11 +320,12 @@ class Agent:
                     NcurO = curO
                 if NcurH <= 0:
                     continue
+                NcurT = curT + 1
                 NcurP = copy.deepcopy(curP)
                 NcurP.append((neighborX, neighborY))
                 NcurD = DIRECTION[i]
                 if NcurE >= self.maxExplored:
-                    remainPath, remainScore, remainHP, remainPotion = self.BFS((neighborX, neighborY), NcurD, NcurH, NcurO)
+                    remainPath, remainScore, remainHP, remainPotion = self.BFS((neighborX, neighborY), (self.size - 1, 0), NcurD, NcurH, NcurO)
                     NcurP.pop()
                     NcurP += remainPath
                     NcurS += remainScore
@@ -300,19 +339,19 @@ class Agent:
                         pathTemp = NcurP
                         exploredTemp = NcurE
                         scoreTemp = NcurS
-                        if NcurE == self.maxExplored:
-                            return pathTemp
+##                        if NcurE == self.maxExplored:
+##                            return pathTemp
                     if NcurE < self.maxExplored:
-                        stack.append(((neighborX, neighborY), NcurE, NcurP, NcurL, NcurS, NcurD, NcurH, NcurO))
-##                    if breakflag:
-##                        delt = []
-##                        for st in range(len(stack)):
-##                            if stack[st][6] <= curT:
-##                                delt.append(st)
-##                        delt.reverse()
-##                        for i in delt:
-##                            stack.pop(i)
-##                        break
+                        stack.append(((neighborX, neighborY), NcurE, NcurP, NcurL, NcurU, NcurS, NcurD, NcurH, NcurO, NcurT))
+                    if breakflag:
+                        delt = []
+                        for st in range(len(stack)):
+                            if stack[st][9] <= curT:
+                                delt.append(st)
+                        delt.reverse()
+                        for i in delt:
+                            stack.pop(i)
+                        break
         return pathTemp
 
     #def PgBFS(self, start):
@@ -420,6 +459,8 @@ class Agent:
             for i in range(4):
                 r, c = self.agentLocation[0] + DIRECTION[i][0], self.agentLocation[1] + DIRECTION[i][1]
                 if r >= 0 and r < self.size and c >= 0 and c < self.size:
+                    if (r, c) in self.explored:
+                        continue
                     if not check(self.KB, 'B', self.explored, Not(P(r, c))):
                         if (r, c) not in self.PerceptPit:
                             print('check', (r, c), 'have pit')
@@ -500,8 +541,10 @@ class Agent:
             for i in range(4):
                 r, c = self.agentLocation[0] + DIRECTION[i][0], self.agentLocation[1] + DIRECTION[i][1]
                 if r >= 0 and r < self.size and c >= 0 and c < self.size:
+                    if (r, c) in self.explored:
+                        continue
                     if not check(self.KB, 'W_H', self.explored, Not(PG(r, c))):
-                        if (r, c) not in self.PerceptGas:
+                        if (r, c) not in self.PerceptGas    :
                             print('check', (r, c), 'have poison')
                             changeflag = True
                             self.PerceptGas.append((r, c))
@@ -586,7 +629,7 @@ class Agent:
                                 print('check', (r, c), 'still have wumpus')
                                 self.PerceptWumpus.append((r, c))
                                 self.unexploreWumpus.append([])
-                                self.predictMap[r][c] = -1
+                                self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
                             else:
                                 print('check', (r, c), 'may have wumpus')
                                 unexplore = []
@@ -603,6 +646,8 @@ class Agent:
                     for i in range(4):
                         ri, ci = self.agentLocation[0] + DIRECTION[i][0], self.agentLocation[1] + DIRECTION[i][1]
                         if ri < 0 or ri >= self.size or ci < 0 or ci >= self.size:
+                            continue
+                        if (ri, ci) in self.explored:
                             continue
                         shootflag = True
                         if (ri, ci) != (r, c):
@@ -668,7 +713,7 @@ class Agent:
                             self.PerdictWumpus.append((r, c))
                             self.unexploreWumpus.append(unexplore)
                             self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
-                            while self.predictMap[r][c] != -1:
+                            while self.predictMap[r][c] >= 0:
                                 self.canMoveCount()
                                 self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
                                 self.countMove = 1
@@ -718,9 +763,6 @@ class Agent:
 ##                    self.countMove = 1
         print(self.agentHP)
         if self.countMove >= len(self.predictPath):
-            print(self.predictMap)
-            print(self.maxExplored)
-            print(self.explored)
             return False
         return True           
             

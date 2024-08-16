@@ -53,19 +53,23 @@ def check(agentKB, key, exploredCell, sentence):
         "G_L": GL,
     }
     obj = {
-        "S": [W, ExistW, ExistS],
-        "B": [P, ExistB, ExistP],
-        "G_L": [HP, ExistHP, ExistGL],
-        "W_H": [PG, ExistPG, ExistWH]
+        "S": ["W", ExistW, ExistS],
+        "B": ["P", ExistB, ExistP],
+        "G_L": ["H_P", ExistHP, ExistGL],
+        "W_H": ["P_G", ExistPG, ExistWH]
     }
-    kb.add(obj[key][1:])
+    kb.add(obj[key][1])
+    kb.add(obj[key][2])
+    threatKey = obj[key][0]
     for cell in exploredCell:
-        kb.add(Not(obj[key][0](cell[0], cell[1])))
+        if cell in agentKB[threatKey]:
+            kb.add(sign[threatKey](cell[0], cell[1]))
+        else:
+            kb.add(Not(sign[threatKey](cell[0], cell[1])))
         if cell in agentKB[key]:
             kb.add(sign[key](cell[0], cell[1]))
         else:
             kb.add(Not(sign[key](cell[0], cell[1])))
-    #kb.set('timeout', 600)
     kb.add(sentence)
     return kb.check() == sat
 
