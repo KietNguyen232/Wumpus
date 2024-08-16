@@ -774,6 +774,4 @@ while flag:
     flag = A.agentLogic()
 print(A.agentLocation, 'climb up')
 print('score', A.score)
-#print(A.KB)
-#print(A.agentPercept)
 a = input()
