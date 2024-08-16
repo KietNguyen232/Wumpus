@@ -602,6 +602,8 @@ class Agent:
                         self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
                         self.countMove = 1
                         r, c = self.predictPath[self.countMove]
+                        if (r, c) in self.explored:
+                            break
                         shootflag = True
                         for _ in range(3):
                             if check(self.KB, 'S', self.explored, W(r, c)):
@@ -718,6 +720,8 @@ class Agent:
                                 self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
                                 self.countMove = 1
                                 r, c = self.predictPath[self.countMove]
+                                if (r, c) in self.explored:
+                                    break
                                 shootflag = True
                                 for _ in range(3):
                                     if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, W(r, c)):
