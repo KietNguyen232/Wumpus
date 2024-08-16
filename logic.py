@@ -65,6 +65,7 @@ def check(agentKB, key, exploredCell, sentence):
             kb.add(sign[key](cell[0], cell[1]))
         else:
             kb.add(Not(sign[key](cell[0], cell[1])))
+    #kb.set('timeout', 600)
     kb.add(sentence)
     return kb.check() == sat
 

@@ -47,6 +47,9 @@ class Program:
         
     def StartingStateRepresentation(self):
         return self.map, self.agentLocation, self.size
+
+    def getObject(self, cell):
+        return self.map[cell[0]][cell[1]]
     
     def AgentShoot(self, cell):
         row, col = cell
@@ -123,8 +126,8 @@ class Program:
             for cell in temp:
                 if "G_L" not in self.map[cell[0]][cell[1]]: 
                     deleteCell.append(cell)
-            return deleteCell
-        return deleteCell
+            return True, deleteCell
+        return False, deleteCell
     
     
-# print(Program().StartingStateRepresentation())
+#print(Program().StartingStateRepresentation())
