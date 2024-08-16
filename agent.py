@@ -4,7 +4,7 @@ from logic import *
 DIRECTION = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 class Agent:
-    def __init__(self, inputFile="map2.txt"):
+    def __init__(self, inputFile="map1.txt"):
         self.WumpusWorld = Program(inputFile)
         _, self.start, self.size = self.WumpusWorld.StartingStateRepresentation()
         self.agentPercept = [[None for _ in range(self.size)] for _ in range(self.size)]
@@ -346,12 +346,12 @@ class Agent:
                     if breakflag:
                         delt = []
                         for st in range(len(stack)):
-                            if stack[st][9] <= curT:
+                            if stack[st][9] <= curT and stack[st][5] > curS:
                                 delt.append(st)
                         delt.reverse()
                         for i in delt:
                             stack.pop(i)
-                        break
+##                        break
         return pathTemp
 
     #def PgBFS(self, start):
