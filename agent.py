@@ -761,7 +761,8 @@ class Agent:
 ##                    self.canMoveCount()
 ##                    self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
 ##                    self.countMove = 1
-        print(self.agentHP)
+        print('HP:', self.agentHP)
+        print('score', self.score)
         if self.countMove >= len(self.predictPath):
             return False
         return True           
