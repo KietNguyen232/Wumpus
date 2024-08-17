@@ -812,17 +812,16 @@ class Agent:
 #Agent.gold: number of gold
 #Agent.potion: number of healing potion
 
-
 #example of using this stupid program:
-stats = ['map explored:', 'agentLocation:', 'agentDirection:', 'score:', 'agentHP:', 'gold:', 'potion:', 'action:']
-A = Agent()
-A.agentLogic() #skip this
-flag = True
-while flag:
-    #A.perceptStatus = True
-    flag = A.agentLogic()
-    for action in A.action:
-        for stat in range(8):
-            print(stats[stat], action[stat])
-        print('========================================')
-a = input()
+##stats = ['map explored:', 'agentLocation:', 'agentDirection:', 'score:', 'agentHP:', 'gold:', 'potion:', 'action:']
+##A = Agent()
+##A.agentLogic() #skip this
+##flag = True
+##while flag:
+##    #A.perceptStatus = True #use as you wish
+##    flag = A.agentLogic()
+##    for action in A.action:
+##        for stat in range(8):
+##            print(stats[stat], action[stat])
+##        print('========================================')
+##a = input()
