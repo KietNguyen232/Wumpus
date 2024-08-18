@@ -4,7 +4,7 @@ from logic import *
 DIRECTION = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 class Agent:
-    def __init__(self, inputFile="map2.txt"):
+    def __init__(self, inputFile="map1.txt"):
         self.WumpusWorld = Program(inputFile)
         _, self.start, self.size = self.WumpusWorld.StartingStateRepresentation()
         self.agentPercept = [[None for _ in range(self.size)] for _ in range(self.size)]
@@ -96,8 +96,8 @@ class Agent:
     def shoot(self):
         temp = (self.agentLocation[0] + self.agentDirection[0], self.agentLocation[1] + self.agentDirection[1])
         if temp[0] >= 0 and temp[0] < self.size and temp[1] >= 0 and temp[1] < self.size:
-            self.score -= 100
             self.addAction('shoot')
+            self.score -= 100
             result, cell = self.WumpusWorld.AgentShoot(temp)
             if result == "SCREAM":
                 self.addAction('SCREAM')
