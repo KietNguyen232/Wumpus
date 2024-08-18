@@ -55,7 +55,8 @@ class Agent:
                     self.agentPercept[i][j] = self.WumpusWorld.getObject((i, j))
                     
     def addAction(self, action):
-        self.action.append((self.agentPercept, self.agentLocation, self.agentDirection, self.score, self.agentHP, self.gold, self.potion, action))
+        agentPercept = copy.deepcopy(self.agentPercept)
+        self.action.append((agentPercept, self.agentLocation, self.agentDirection, self.score, self.agentHP, self.gold, self.potion, action))
         
     def turnRight(self):
         self.addAction('turn right')
