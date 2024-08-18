@@ -24,16 +24,16 @@ class GUI:
                         pg.transform.scale(pg.image.load(".\img\\agent_down.png"), (96, 96)), 
                         pg.transform.scale(pg.image.load(".\img\\agent_left.png"), (96, 96)),
                         pg.transform.scale(pg.image.load(".\img\\agent_pass.png"), (96, 96))]
-        self._gas =  pg.transform.scale(pg.image.load(".\img\\gas.png"), (40, 40))
-        self._healingpotion = pg.transform.scale(pg.image.load(".\img\\healingpotion.png"), (40, 40))
-        self._goal =  pg.transform.scale(pg.image.load(".\img\\goal.png"), (40, 40))
-        self._pit = pg.transform.scale(pg.image.load(".\img\\pit.png"), (40, 40))
-        self._wumpus =  pg.transform.scale(pg.image.load(".\img\\wumpus.png"), (40, 40))
-        self._stench = pg.transform.scale(pg.image.load(".\img\stench.png"), (40, 40))
-        self._breeze = pg.transform.scale(pg.image.load(".\img\\breeze.png"), (40, 40))
-        self._glow = pg.transform.scale(pg.image.load(".\img\glow.png"), (40, 40))
-        self._whiff = pg.transform.scale(pg.image.load(".\img\whiff.png"),(40, 40))
-        self._nothing = pg.transform.scale(pg.image.load(".\img\\nothing.png"), (40, 40))
+        self._gas =  pg.transform.scale(pg.image.load(".\img\\gas.png"), (100, 100))
+        self._healingpotion = pg.transform.scale(pg.image.load(".\img\\healingpotion.png"), (100, 100))
+        self._goal =  pg.transform.scale(pg.image.load(".\img\\goal.png"), (100, 100))
+        self._pit = pg.transform.scale(pg.image.load(".\img\\pit.png"), (100, 100))
+        self._wumpus =  pg.transform.scale(pg.image.load(".\img\\wumpus.png"), (100, 100))
+        self._stench = pg.transform.scale(pg.image.load(".\img\stench.png"), (100, 100))
+        self._breeze = pg.transform.scale(pg.image.load(".\img\\breeze.png"), (100, 100))
+        self._glow = pg.transform.scale(pg.image.load(".\img\glow.png"), (100, 100))
+        self._whiff = pg.transform.scale(pg.image.load(".\img\whiff.png"),(100, 100))
+        self._nothing = pg.transform.scale(pg.image.load(".\img\\nothing.png"), (96, 96))
         self._hud = pg.image.load(".\img\\newhud.png")
     def getAgentPicture(self, direction:tuple):
         match direction:
@@ -85,18 +85,52 @@ class GUI:
             case "bottom":
                 return self.bottomCell
         return (0,0,0,0)
-    def drawPerceptInfo(self, direction:str, percepts:list):
-        offsetX, offsetY, width, height = self.getPerceptCell(direction)
-        tempOffSetX = offsetX
-        offsetY+= 36
-        pg.draw.rect()
-        for i in len(percepts):
-            img = self.getProperpyImage(percepts[i])
-            self.screen.blit(img, (tempOffSetX, offsetY))
-            tempOffSetX += img.get_rect().size[0]
-            if (tempOffSetX > offsetX + width + 1):
-                tempOffSetX = offsetX
-                offsetY += img.get_rect().size[1]
+    def drawPerceptInfo(self, location:tuple, percepts:list):
+        if (location[0] -  1 >= 0):
+            if (percepts[location[0] -  1][location[1]]):
+                posx = self.board[0] + location[1]*(self.cellW) + (self.cellW - self._nothing.get_rect().size[0])/2
+                posy = self.board[1] + (location[0] - 1)*(self.cellH) + (self.cellH - self._nothing.get_rect().size[1])/2
+                self.screen.blit(self._nothing, (posx, posy))
+                percept = percepts[location[0] -  1][location[1]]
+                for i in range(len(percept)):
+                    img = self.getProperpyImage(percept[i])
+                    posx = self.board[0] + location[1]*(self.cellW) + (self.cellW - img.get_rect().size[0])/2
+                    posy = self.board[1] + (location[0] - 1)*(self.cellH) + (self.cellH - img.get_rect().size[1])/2
+                    self.screen.blit(img, (posx, posy))
+        if (location[0] +  1 < self.mapSize):
+            if (percepts[location[0] +  1][location[1]]):
+                percept = percepts[location[0] +  1][location[1]]
+                posx = self.board[0] + location[1]*(self.cellW) + (self.cellW - self._nothing.get_rect().size[0])/2
+                posy = self.board[1] + (location[0] + 1)*(self.cellH) + (self.cellH - self._nothing.get_rect().size[1])/2
+                self.screen.blit(self._nothing, (posx, posy))
+                for i in range(len(percept)):
+                    img = self.getProperpyImage(percept[i])
+                    posx = self.board[0] + location[1]*(self.cellW) + (self.cellW - img.get_rect().size[0])/2
+                    posy = self.board[1] + (location[0] + 1)*(self.cellH) + (self.cellH - img.get_rect().size[1])/2
+                    self.screen.blit(img, (posx, posy))
+        if (location[1] -  1 >= 0):
+            if (percepts[location[0]][location[1] - 1]):
+                percept = percepts[location[0]][location[1] - 1]
+                posx = self.board[0] + (location[1] - 1)*(self.cellW) + (self.cellW - self._nothing.get_rect().size[0])/2
+                posy = self.board[1] + (location[0])*(self.cellH) + (self.cellH - self._nothing.get_rect().size[1])/2
+                self.screen.blit(self._nothing, (posx, posy))
+                for i in range(len(percept)):
+                    img = self.getProperpyImage(percept[i])
+                    posx = self.board[0] + (location[1] - 1)*(self.cellW) + (self.cellW - img.get_rect().size[0])/2
+                    posy = self.board[1] + location[0]*(self.cellH) + (self.cellH - img.get_rect().size[1])/2
+                    self.screen.blit(img, (posx, posy))
+        if (location[1] +  1 < self.mapSize):
+            if (percepts[location[0]][location[1] + 1]):
+                percept = percepts[location[0]][location[1] + 1]
+                posx = self.board[0] + (location[1] + 1)*(self.cellW) + (self.cellW - self._nothing.get_rect().size[0])/2
+                posy = self.board[1] + (location[0])*(self.cellH) + (self.cellH - self._nothing.get_rect().size[1])/2
+                self.screen.blit(self._nothing, (posx, posy))
+                for i in range(len(percept)):
+                    img = self.getProperpyImage(percept[i])
+                    posx = self.board[0] + (location[1] + 1)*(self.cellW) + (self.cellW - img.get_rect().size[0])/2
+                    posy = self.board[1] + location[0]*(self.cellH) + (self.cellH - img.get_rect().size[1])/2
+                    self.screen.blit(img, (posx, posy))
+        pg.display.flip()
     def run(self): 
         run = True
         flag = True
@@ -122,13 +156,13 @@ class GUI:
             else:
                 agentPos = actionList[actionListIndex][1]
                 # print(actionList[actionListIndex])
-                # if (agentPos[0] - 1 >= 0):
-                #     self.drawPerceptInfo
+                
                 print(actionList[actionListIndex][0][agentPos[0]][agentPos[1]])
                 print("===================================")
                 if oldPos !=  (-1,-1):
                     self.drawAgent(oldPos, (-1, -1))
                 self.drawAgent(actionList[actionListIndex][1], actionList[actionListIndex][2])
+                self.drawPerceptInfo(agentPos, actionList[actionListIndex][0])
                 oldPos = actionList[actionListIndex][1]
                 actionListIndex += 1
             pg.display.flip()
