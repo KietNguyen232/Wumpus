@@ -4,7 +4,7 @@ from logic import *
 DIRECTION = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 class Agent:
-    def __init__(self, inputFile="map1.txt"):
+    def __init__(self, inputFile="map2.txt"):
         self.WumpusWorld = Program(inputFile)
         _, self.start, self.size = self.WumpusWorld.StartingStateRepresentation()
         self.agentPercept = [[None for _ in range(self.size)] for _ in range(self.size)]
@@ -485,7 +485,7 @@ class Agent:
                                     if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                         continue
                                     if (r + u, c + v) not in self.explored:
-                                        unexplore.append((u, v))
+                                        unexplore.append((r + u, c + v))
                             self.PerceptPit.append((r, c))
                             self.unexplorePit.append(unexplore)
                             self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
@@ -587,7 +587,7 @@ class Agent:
                                     if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                         continue
                                     if (r + u, c + v) not in self.explored:
-                                        unexplore.append((u, v))
+                                        unexplore.append((r + u, c + v))
                             self.PerceptGas.append((r, c))
                             self.unexploreGas.append(unexplore)
             if changeflag:
@@ -665,7 +665,7 @@ class Agent:
                                         if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                             continue
                                         if (r + u, c + v) not in self.explored:
-                                            unexplore.append((u, v))
+                                            unexplore.append((r + u, c + v))
                             self.PerdictWumpus.append((r, c))
                             self.unexploreWumpus.append(unexplore)
                             self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
@@ -732,7 +732,7 @@ class Agent:
                                     if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                         continue
                                     if (r + u, c + v) not in self.explored:
-                                        unexplore.append((u, v))
+                                        unexplore.append((r + u, c + v))
                             self.PerdictWumpus.append((r, c))
                             self.unexploreWumpus.append(unexplore)
                             self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
@@ -778,7 +778,7 @@ class Agent:
                                                 if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                                     continue
                                                 if (r + u, c + v) not in self.explored:
-                                                    unexplore.append((u, v))
+                                                    unexplore.append((r + u, c + v))
                                     self.PerdictWumpus.append((r, c))
                                     self.unexploreWumpus.append(unexplore)
                                     self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
