@@ -4,7 +4,7 @@ from logic import *
 DIRECTION = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 class Agent:
-    def __init__(self, inputFile="map2.txt"):
+    def __init__(self, inputFile="map1.txt"):
         self.WumpusWorld = Program(inputFile)
         _, self.start, self.size = self.WumpusWorld.StartingStateRepresentation()
         self.agentPercept = [[None for _ in range(self.size)] for _ in range(self.size)]
