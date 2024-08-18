@@ -59,7 +59,7 @@ class GUI:
                 return self._pit
             case "P_G": 
                 return self._gas
-            case "H_L": 
+            case "H_P": 
                 return self._healingpotion
             case "G":
                 return self._goal
