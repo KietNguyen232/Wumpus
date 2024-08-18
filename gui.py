@@ -67,8 +67,8 @@ class GUI:
                 return self._stench
             case "B": 
                 return self._breeze
-            case "W": 
-                return self._wumpus
+            case "W_H": 
+                return self._whiff
             case "G_L": 
                 return self._glow
         return self._nothing
