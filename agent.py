@@ -40,12 +40,11 @@ class Agent:
         self.unexploreGas = []
         self.unexplorePotion = []
         self.unexploreWumpus = []
-        self.unexploreIdx = [[[[], [], []] for _ in range(self.size)] for _ in range(self.size)]
         self.potemp = []
         
         self.maxExplored = self.size * self.size
         self.predictMap = [[0 for _ in range(self.size)] for _ in range(self.size)]
-        self.predictPath = self.DFS(self.start, self.agentDirection)
+        self.predictPath = self.fakeDFS(self.start, self.agentDirection)
 
         self.countMove = 0        
     
@@ -196,8 +195,8 @@ class Agent:
                     NcurS = curS + 20
                 elif DIRECTION[i][0] + curD[0] + DIRECTION[i][1] + curD[1] == 0:
                     NcurS = curS + 30
-                if NcurS > scoreTemp:
-                    continue
+##                if NcurS > scoreTemp:
+##                    continue
                 if (neighborX, neighborY) in self.PerceptGas:
                     if curO > 0 and curH <= 50:
                         NcurO = curO - 1
@@ -212,7 +211,7 @@ class Agent:
                 if NcurH <= 0:
                     continue
                 NcurD = DIRECTION[i]
-                if self.predictMap[neighborX][neighborY] >= 0 and ((neighborX, neighborY) not in visited or (neighborX, neighborY) in visited and NcurS < visited[(neighborX, neighborY)][1]):
+                if self.predictMap[neighborX][neighborY] >= 0 and ((neighborX, neighborY) not in visited) or (neighborX, neighborY) in visited and NcurS < visited[(neighborX, neighborY)][1]:
                     visited[(neighborX, neighborY)] = ((curR, curC), NcurS)
                     if (neighborX, neighborY) == end:
                         if NcurS < scoreTemp:
@@ -223,6 +222,59 @@ class Agent:
                     queue.append(((neighborX, neighborY), NcurS, NcurD, NcurH, NcurO))
         return pathTemp, scoreTemp, hpTemp, poTemp
 
+
+    def fakeDFS(self, start, direction):
+        goal = (self.size - 1, 0)
+        unexplored = []
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.predictMap[i][j] == 0:
+                    unexplored.append((i, j))
+        path = [start]
+        nextMove = [start]
+        nextDirection = direction
+        nextHP = self.agentHP
+        nextPotion = self.potion
+
+        while nextMove != []:
+            tScore3 = self.size * self.size * 30 * 2
+            tPath3 = []
+            tHP3 = nextHP
+            tPotion3 = nextPotion
+            for Nunexplore in unexplored:
+                NPath, NScore, NHP, NPotion = self.BFS(path[-1], Nunexplore, nextDirection, nextHP, nextPotion)
+                if NHP <= 0:
+                    continue
+                if NScore > 0:
+                    tPath = NPath
+                    tScore = NScore
+                    tHP = NHP
+                    tPotion = NPotion
+                    tPath2, tScore2, tHP2, tPotion2 = self.BFS(tPath[-1], goal, (tPath[-1][0] - tPath[-2][0], tPath[-1][1] - tPath[-2][1]), tHP, tPotion)
+                    if tScore < tScore3 and tHP2 > 0:
+                        tPath3 = tPath
+                        tScore3 = tScore
+                        tHP3 = tHP
+                        tPotion3 = tPotion
+            if tPath3 == []:
+                tPath3, tScore3, tHP3, tPotion3 = self.BFS(path[-1], goal, nextDirection, nextHP, nextPotion)
+                nextMove = []
+                path.pop()
+                path += tPath3
+                nextDirection = (path[-1][0] - path[-2][0], path[-1][1] - path[-2][1])
+                nextHP = tHP3
+                nextPotion = tPotion3
+            else:
+                path.pop()
+                path += tPath3
+                nextMove = [tPath3[-1]]
+                nextDirection = (path[-1][0] - path[-2][0], path[-1][1] - path[-2][1])
+                nextHP = tHP3
+                nextPotion = tPotion3
+                unexplored.pop(unexplored.index(tPath3[-1]))
+        return path
+                
+        
     def DFS(self, start, direction):
         goal = (self.size - 1, 0)
         unexplored = []
@@ -242,7 +294,6 @@ class Agent:
         scoreTemp = self.size * self.size * 30 * 2
         pathTemp = []
         while stack:
-            #print(len(stack))
             (curR, curC), curE, curP, curL, curU, curS, curD, curH, curO, curT = stack.pop(0)
 ##            print((curR, curC), curE, curP, curL, curS, curD, curH, curO)
             breakflag = False
@@ -298,9 +349,60 @@ class Agent:
                             NcurS = curS + tScore
                             NcurU.pop(NcurU.index(tPath[-1]))
                             NcurT = len(NcurP) - 1
-                            stack.append(((neighborX, neighborY), NcurE, NcurP, NcurL, NcurU, NcurS, NcurD, tHP, tPotion, NcurT))
+                            NcurH = tHP
+                            NcurO = tPotion
                             breakflag = True
-                            break
+                            if NcurE >= self.maxExplored:
+                                remainPath, remainScore, remainHP, remainPotion = self.BFS((neighborX, neighborY), (self.size - 1, 0), NcurD, NcurH, NcurO)
+                                NcurP.pop()
+                                NcurP += remainPath
+                                NcurS += remainScore
+                                neighborX, neighborY = NcurP[-1]
+                                NcurH = remainHP
+                                NcurO = remainPotion
+                            if NcurH <= 0:
+                                continue
+                            if NcurS <= self.maxExplored * 30:
+                                if (neighborX, neighborY) == (self.size - 1, 0) and (NcurE > exploredTemp or (NcurE == exploredTemp and NcurS < scoreTemp)):
+                                    pathTemp = NcurP
+                                    exploredTemp = NcurE
+                                    scoreTemp = NcurS
+##                                    if NcurE == self.maxExplored:
+##                                        return pathTemp
+                                if NcurE <= self.maxExplored:
+                                    stack.append(((neighborX, neighborY), NcurE, NcurP, NcurL, NcurU, NcurS, NcurD, NcurH, NcurO, NcurT))
+##                                if breakflag:
+##                                    delt = []
+##                                    for st in range(len(stack)):
+##                                        if stack[st][9] <= NcurT - 1 and stack[st][5] > NcurS - 30:
+##                                            delt.append(st)
+##                                    delt.reverse()
+##                                    for i in delt:
+##                                        stack.pop(i)
+                        if tPath == []:
+                            remainPath, remainScore, remainHP, remainPotion = self.BFS((curR, curC), (self.size - 1, 0), curD, curH, curO)
+                            NcurP = copy.deepcopy(curP)
+                            NcurP.pop()
+                            NcurP += remainPath
+                            NcurS = curS + remainScore
+                            neighborX, neighborY = NcurP[-1]
+                            NcurH = remainHP
+                            NcurO = remainPotion
+                            NcurE = curE
+                            NcurL = copy.deepcopy(curL)
+                            NcurU = copy.deepcopy(curU)
+                            NcurD = (NcurP[-1][0] - NcurP[-2][0], NcurP[-1][1] - NcurP[-2][1])
+                            NcurT = len(NcurP) - 1
+                            if NcurH <= 0:
+                                continue
+                            if NcurS <= self.maxExplored * 30:
+                                if (neighborX, neighborY) == (self.size - 1, 0) and (NcurE > exploredTemp or (NcurE == exploredTemp and NcurS < scoreTemp)):
+                                    pathTemp = NcurP
+                                    exploredTemp = NcurE
+                                    scoreTemp = NcurS
+##                                    if NcurE == self.maxExplored:
+##                                        return pathTemp
+                        break
                     NcurE = curE
                     NcurL = copy.deepcopy(curL)
                 elif (neighborX, neighborY) not in curL:
@@ -333,6 +435,8 @@ class Agent:
                 NcurP = copy.deepcopy(curP)
                 NcurP.append((neighborX, neighborY))
                 NcurD = DIRECTION[i]
+                if self.BFS((neighborX, neighborY), (self.size - 1, 0), NcurD, NcurH, NcurO)[2] == 0:
+                    continue
                 if NcurE >= self.maxExplored:
                     remainPath, remainScore, remainHP, remainPotion = self.BFS((neighborX, neighborY), (self.size - 1, 0), NcurD, NcurH, NcurO)
                     NcurP.pop()
@@ -348,104 +452,27 @@ class Agent:
                         pathTemp = NcurP
                         exploredTemp = NcurE
                         scoreTemp = NcurS
-##                        if NcurE == self.maxExplored:
-##                            return pathTemp
-                    if NcurE < self.maxExplored:
+                        if NcurE == self.maxExplored:
+                            return pathTemp
+                    if NcurE <= self.maxExplored:
                         stack.append(((neighborX, neighborY), NcurE, NcurP, NcurL, NcurU, NcurS, NcurD, NcurH, NcurO, NcurT))
-                    if breakflag:
-                        delt = []
-                        for st in range(len(stack)):
-                            if stack[st][9] <= curT and stack[st][5] > curS:
-                                delt.append(st)
-                        delt.reverse()
-                        for i in delt:
-                            stack.pop(i)
+##                    if breakflag:
+##                        delt = []
+##                        for st in range(len(stack)):
+##                            if stack[st][9] <= curT and stack[st][5] > curS:
+##                                delt.append(st)
+##                        delt.reverse()
+##                        for i in delt:
+##                            stack.pop(i)
 ##                        break
         return pathTemp
+
 
     def agentLogic(self):
         self.action = []
         self.move()
         self.countMove += 1
         self.predictMap[self.agentLocation[0]][self.agentLocation[1]] = self.countMove
-
-        checkflag = False
-        rev = []
-        for idx in range(len(self.unexplorePit)):
-            if self.agentLocation in self.unexplorePit[idx]:
-                r, c = self.PerceptPit[idx][0], self.PerceptPit[idx][1]
-                if not check(self.KB, "B", self.explored, (r, c)):
-                    if self.perceptStatus:
-                        self.addAction(f'check {(r, c)} do not have pit')
-                    rev.append(idx)
-                    self.predictMap[r][c] += 1
-                    checkflag = True
-                else:
-                    self.unexplorePit[idx].pop(self.unexplorePit[idx].index(self.agentLocation))
-        rev.reverse()
-        for idx in range(len(rev)):
-            self.unexplorePit.pop(rev[idx])
-            self.PerceptPit.pop(rev[idx])
-        if checkflag:
-            self.canMoveCount()
-            self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
-            self.countMove = 1
-
-        checkflag = False
-        rev = []
-        for idx in range(len(self.unexploreWumpus)):
-            if self.agentLocation in self.unexploreWumpus[idx]:
-                r, c = self.PerceptWumpus[idx][0], self.PerceptWumpus[idx][1]
-                if not check(self.KB, "S", self.explored, (r, c)):
-                    if self.perceptStatus:
-                        self.addAction(f'check {(r, c)} do not have wumpus')
-                    rev.append(idx)
-                    self.predictMap[r][c] += 1
-                    checkflag = True
-                else:
-                    self.unexploreWumpus[idx].pop(self.unexploreWumpus[idx].index(self.agentLocation))
-        rev.reverse()
-        for idx in range(len(rev)):
-            self.unexploreWumpus.pop(rev[idx])
-            self.PerceptWumpus.pop(rev[idx])
-        if checkflag:
-            self.canMoveCount()
-            self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
-            self.countMove = 1
-
-        checkflag = False
-        rev = []
-        for idx in range(len(self.unexploreGas)):
-            if self.agentLocation in self.unexploreGas[idx]:
-                r, c = self.PerceptGas[idx][0], self.PerceptGas[idx][1]
-                if (r, c) in self.KB['P_G']:
-                    if self.perceptStatus:
-                        self.addAction(f'check {(r, c)} have poison gas')
-                    self.unexploreGas[idx] = []
-                else:
-                    if not check(self.KB, "W_H", self.explored, (r, c)):
-                        if self.perceptStatus:
-                            self.addAction(f'check {(r, c)} do not have poison gas')
-                        rev.append(idx)
-                        checkflag = True
-                    else:
-                        self.unexploreGas[idx].pop(self.unexploreGas[idx].index(self.agentLocation))
-        rev.reverse()
-        for idx in range(len(rev)):
-            self.unexploreGas.pop(rev[idx])
-            self.PerceptGas.pop(rev[idx])
-        if checkflag:
-            self.canMoveCount()
-            self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
-            self.countMove = 1
-        
-        if len(self.potemp) > 0:
-            for _ in range(len(self.potemp)):
-                rev = self.potemp.pop()
-                self.predictMap[rev[0]][rev[1]] += 1
-            self.canMoveCount()
-            self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
-            self.countMove = 1
 
         if 'P' in self.WumpusWorld.getObject(self.agentLocation) or 'W' in self.WumpusWorld.getObject(self.agentLocation) or ('P_G' in self.WumpusWorld.getObject(self.agentLocation) and self.agentHP <= 25):
             self.addAction('died')
@@ -463,6 +490,84 @@ class Agent:
         if self.agentHP <= 25 and self.potion > 0:
             self.useHealingPotion()
 
+        checkflag = False
+        rev = []
+        for idx in range(len(self.unexplorePit)):
+            if self.agentLocation in self.unexplorePit[idx]:
+                r, c = self.PerceptPit[idx][0], self.PerceptPit[idx][1]
+                if not check(self.KB, "B", self.explored, P(r, c)):
+                    if self.perceptStatus:
+                        self.addAction(f'check {(r, c)} do not have pit')
+                    rev.append(idx)
+                    self.predictMap[r][c] += 1
+                    checkflag = True
+                else:
+                    self.unexplorePit[idx].pop(self.unexplorePit[idx].index(self.agentLocation))
+        rev.reverse()
+        for idx in range(len(rev)):
+            self.unexplorePit.pop(rev[idx])
+            self.PerceptPit.pop(rev[idx])
+        if checkflag:
+            self.canMoveCount()
+            self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
+            self.countMove = 1
+
+        checkflag = False
+        rev = []
+        for idx in range(len(self.unexploreWumpus)):
+            if self.agentLocation in self.unexploreWumpus[idx]:
+                r, c = self.PerceptWumpus[idx][0], self.PerceptWumpus[idx][1]
+                if not check(self.KB, "S", self.explored, W(r, c)):
+                    if self.perceptStatus:
+                        self.addAction(f'check {(r, c)} do not have wumpus')
+                    rev.append(idx)
+                    self.predictMap[r][c] += 1
+                    checkflag = True
+                else:
+                    self.unexploreWumpus[idx].pop(self.unexploreWumpus[idx].index(self.agentLocation))
+        rev.reverse()
+        for idx in range(len(rev)):
+            self.unexploreWumpus.pop(rev[idx])
+            self.PerceptWumpus.pop(rev[idx])
+        if checkflag:
+            self.canMoveCount()
+            self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
+            self.countMove = 1
+
+        checkflag = False
+        rev = []
+        for idx in range(len(self.unexploreGas)):
+            if self.agentLocation in self.unexploreGas[idx]:
+                r, c = self.PerceptGas[idx][0], self.PerceptGas[idx][1]
+                if (r, c) in self.KB['P_G']:
+                    if self.perceptStatus:
+                        self.addAction(f'check {(r, c)} have poison gas')
+                    self.unexploreGas[idx] = []
+                else:
+                    if not check(self.KB, "W_H", self.explored, PG(r, c)):
+                        if self.perceptStatus:
+                            self.addAction(f'check {(r, c)} do not have poison gas')
+                        rev.append(idx)
+                        checkflag = True
+                    else:
+                        self.unexploreGas[idx].pop(self.unexploreGas[idx].index(self.agentLocation))
+        rev.reverse()
+        for idx in range(len(rev)):
+            self.unexploreGas.pop(rev[idx])
+            self.PerceptGas.pop(rev[idx])
+        if checkflag:
+            self.canMoveCount()
+            self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
+            self.countMove = 1
+
+        if len(self.potemp) > 0:
+            for _ in range(len(self.potemp)):
+                rev = self.potemp.pop()
+                self.predictMap[rev[0]][rev[1]] += 1
+            self.canMoveCount()
+            self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
+            self.countMove = 1
+
         if 'B' in self.WumpusWorld.getObject(self.agentLocation):
             changeflag = False
             for i in range(4):
@@ -470,7 +575,7 @@ class Agent:
                 if r >= 0 and r < self.size and c >= 0 and c < self.size:
                     if (r, c) in self.explored:
                         continue
-                    if not check(self.KB, 'B', self.explored, (r, c), False):
+                    if not check(self.KB, 'B', self.explored, Not(P(r, c))):
                         if (r, c) not in self.PerceptPit:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} have pit')
@@ -478,7 +583,7 @@ class Agent:
                             self.PerceptPit.append((r, c))
                             self.unexplorePit.append([])
                             self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
-                    elif check(self.KB, "B", self.explored, (r, c)):
+                    elif check(self.KB, "B", self.explored, P(r, c)):
                         if (r, c) not in self.PerceptPit:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} may have pit')
@@ -495,7 +600,7 @@ class Agent:
                             self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
             if changeflag:
                     self.canMoveCount()
-                    self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+                    self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
                     self.countMove = 1
 
         if 'G_L' in self.WumpusWorld.getObject(self.agentLocation):
@@ -512,9 +617,9 @@ class Agent:
             r, c = [r0, r1, r2, r3], [c0, c1, c2, c3]
             PoGu = [[0, 0, 0, 0], [0, 0, 0, 0]]
             for i in range(4):
-                if not check(self.KB, 'G_L', self.explored, (r[i], c[i]), False):
+                if not check(self.KB, 'G_L', self.explored, Not(HP(r[i], c[i]))):
                     PoGu[0][i] = 1
-                if check(self.KB, 'G_L', self.explored, (r[i], c[i])):
+                if check(self.KB, 'G_L', self.explored, HP(r[i], c[i])):
                     PoGu[1][i] = 1
             changeflag = False
             if PoGu[0][0] == 0 and (PoGu[0][1] == 1 or PoGu[0][2] == 1 or PoGu[0][3] == 1):
@@ -563,7 +668,7 @@ class Agent:
                     self.addAction(f'check {(r[0], c[0])} may have potion')
             if changeflag:
                 self.canMoveCount()
-                self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+                self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
                 self.countMove = 1
 
         if 'W_H' in self.WumpusWorld.getObject(self.agentLocation):
@@ -573,14 +678,14 @@ class Agent:
                 if r >= 0 and r < self.size and c >= 0 and c < self.size:
                     if (r, c) in self.explored:
                         continue
-                    if not check(self.KB, 'W_H', self.explored, (r, c), False):
+                    if not check(self.KB, 'W_H', self.explored, Not(PG(r, c))):
                         if (r, c) not in self.PerceptGas:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} have poison gas')
                             changeflag = True
                             self.PerceptGas.append((r, c))
                             self.unexploreGas.append([])
-                    elif check(self.KB, "W_H", self.explored, (r, c)):
+                    elif check(self.KB, "W_H", self.explored, PG(r, c)):
                         if (r, c) not in self.PerceptGas:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} may have poison gas')
@@ -596,14 +701,14 @@ class Agent:
                             self.unexploreGas.append(unexplore)
             if changeflag:
                     self.canMoveCount()
-                    self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+                    self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
                     self.countMove = 1
-        
+
         if 'S' in self.WumpusWorld.getObject(self.agentLocation):
             r, c = self.predictPath[self.countMove]
             shootflag = True
             for _ in range(3):
-                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and not check(self.KB, 'S', self.explored, (r, c), False):
+                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and not check(self.KB, 'S', self.explored, Not(W(r, c))):
                     if self.perceptStatus:
                         self.addAction(f'check {(r, c)} have wumpus')
                     newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
@@ -620,8 +725,8 @@ class Agent:
                         break
                 else:
                     break
-            if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, (r, c)):
-                if not check(self.KB, 'S', self.explored, (r, c), False):
+            if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                if not check(self.KB, 'S', self.explored, Not(W(r, c))):
                     if self.perceptStatus:
                         self.addAction(f'check {(r, c)} still have wumpus')
                     self.PerceptWumpus.append((r, c))
@@ -629,14 +734,14 @@ class Agent:
                     self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
                     while self.predictMap[r][c] != -1:
                         self.canMoveCount()
-                        self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+                        self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
                         self.countMove = 1
                         r, c = self.predictPath[self.countMove]
                         if (r, c) in self.explored:
                             break
                         shootflag = True
                         for _ in range(3):
-                            if check(self.KB, 'S', self.explored, (r, c)):
+                            if check(self.KB, 'S', self.explored, W(r, c)):
                                 if self.perceptStatus:
                                     self.addAction(f'check {(r, c)} may have wumpus')
                                 newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
@@ -653,8 +758,8 @@ class Agent:
                                     break
                             else:
                                 break
-                        if shootflag and check(self.KB, 'S', self.explored, (r, c)):
-                            if not check(self.KB, 'S', self.explored, (r, c), False):
+                        if shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                            if not check(self.KB, 'S', self.explored, Not(W(r, c))):
                                 if self.perceptStatus:
                                     self.addAction(f'check {(r, c)} still have wumpus')
                                 self.PerceptWumpus.append((r, c))
@@ -682,9 +787,9 @@ class Agent:
                             continue
                         shootflag = True
                         if (ri, ci) != (r, c):
-                            if not check(self.KB, 'S', self.explored, (ri, ci), False):
+                            if not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
                                 for _ in range(3):
-                                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and not check(self.KB, 'S', self.explored, (ri, ci), False):
+                                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
                                         if self.perceptStatus:
                                             self.addAction(f'check {(ri, ci)} have wumpus')
                                         newDirection = (ri - self.agentLocation[0], ci - self.agentLocation[1])
@@ -701,16 +806,16 @@ class Agent:
                                             break
                                     else:
                                         break
-                                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and not check(self.KB, 'S', self.explored, (ri, ci), False):
+                                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
                                     if self.perceptStatus:
                                         self.addAction(f'check {(ri, ci)} still have wumpus')
                                     self.PerceptWumpus.append((ri, ci))
                                     self.unexploreWumpus.append([])
                                     self.predictMap[ri][ci] = min(self.predictMap[ri][ci] - 1, -1)
-                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, (r, c)):
+                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, W(r, c)):
                         shootflag = True
                         for _ in range(3):
-                            if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, (r, c)):
+                            if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, W(r, c)):
                                 if self.perceptStatus:
                                     self.addAction(f'check {(r, c)} may have wumpus')
                                 newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
@@ -727,7 +832,7 @@ class Agent:
                                     break
                             else:
                                 break
-                        if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, (r, c)):
+                        if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} may have wumpus')
                             unexplore = []
@@ -742,14 +847,14 @@ class Agent:
                             self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
                             while self.predictMap[r][c] >= 0:
                                 self.canMoveCount()
-                                self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+                                self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
                                 self.countMove = 1
                                 r, c = self.predictPath[self.countMove]
                                 if (r, c) in self.explored:
                                     break
                                 shootflag = True
                                 for _ in range(3):
-                                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, (r, c)):
+                                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, W(r, c)):
                                         if self.perceptStatus:
                                             self.addAction(f'check {(r, c)} may have wumpus')
                                         newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
@@ -766,8 +871,8 @@ class Agent:
                                             break
                                     else:
                                         break
-                                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, (r, c)):
-                                    if not check(self.KB, 'S', self.explored, (r, c), False):
+                                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                                    if not check(self.KB, 'S', self.explored, Not(W(r, c))):
                                         if self.perceptStatus:
                                             self.addAction(f'check {(r, c)} still have wumpus')
                                         self.PerceptWumpus.append((r, c))
@@ -787,9 +892,12 @@ class Agent:
                                     self.unexploreWumpus.append(unexplore)
                                     self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
 ##                    self.canMoveCount()
-##                    self.predictPath = self.DFS(self.agentLocation, self.agentDirection)
+##                    self.predictPath = self.fakeDFS(self.agentLocation, self.agentDirection)
 ##                    self.countMove = 1
         if self.countMove >= len(self.predictPath):
+##            print(self.countMove)
+##            print(self.predictPath)
+##            print(self.predictMap)
             self.addAction('climb up')
             return False
         return True           
@@ -822,7 +930,7 @@ class Agent:
 ##A.agentLogic() #skip this
 ##flag = True
 ##while flag:
-##    #A.perceptStatus = True #use as you wish
+##    A.perceptStatus = True #use as you wish
 ##    flag = A.agentLogic()
 ##    for action in A.action:
 ##        for stat in range(8):
