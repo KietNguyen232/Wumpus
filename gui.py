@@ -271,15 +271,17 @@ class GUI:
                      
             pg.display.flip()
             pg.time.Clock().tick(4)
+
                 
 def main():
     filename = input("Path to input map: ")
     while True:
+        pg.init()
+        pg.font.init()
         try:
             print("Initializing the GUI")
-            sim = GUI(filename)
             print("Run the simulation")
-            sim.run()
+            GUI(filename).run()
         except:
             print("File invalid!!!!")
         filename = input("PLease input file path for new simulation, or q to quit: ")
