@@ -44,8 +44,8 @@ def random_map_generator(n = 10,
     # Convert 2d array to full string
     testcase = f'{n}\n' + '\n'.join(['.'.join(row) for row in wmap])
 
-    with open("testcase.txt", "a") as f:
+    with open("testcase.txt", "w") as f:
         f.write(testcase)
     return testcase
 
-random_map_generator(n=10, agent_loc=(0, 0), n_wumpus=10, n_pit=10, n_gold=10, n_gas=10, n_potion=10)
+random_map_generator(n=10, agent_loc=(9, 0), n_wumpus=10, n_pit=10, n_gold=10, n_gas=10, n_potion=10)
