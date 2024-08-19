@@ -40,7 +40,6 @@ class Agent:
         self.unexploreGas = []
         self.unexplorePotion = []
         self.unexploreWumpus = []
-        self.unexploreIdx = [[[[], [], []] for _ in range(self.size)] for _ in range(self.size)]
         self.potemp = []
         
         self.maxExplored = self.size * self.size
@@ -196,8 +195,6 @@ class Agent:
                     NcurS = curS + 20
                 elif DIRECTION[i][0] + curD[0] + DIRECTION[i][1] + curD[1] == 0:
                     NcurS = curS + 30
-                if NcurS > scoreTemp:
-                    continue
                 if (neighborX, neighborY) in self.PerceptGas:
                     if curO > 0 and curH <= 50:
                         NcurO = curO - 1
@@ -374,7 +371,7 @@ class Agent:
         for idx in range(len(self.unexplorePit)):
             if self.agentLocation in self.unexplorePit[idx]:
                 r, c = self.PerceptPit[idx][0], self.PerceptPit[idx][1]
-                if not check(self.KB, "B", self.explored, (r, c)):
+                if not check(self.KB, "B", self.explored, P(r, c)):
                     if self.perceptStatus:
                         self.addAction(f'check {(r, c)} do not have pit')
                     rev.append(idx)
@@ -396,7 +393,7 @@ class Agent:
         for idx in range(len(self.unexploreWumpus)):
             if self.agentLocation in self.unexploreWumpus[idx]:
                 r, c = self.PerceptWumpus[idx][0], self.PerceptWumpus[idx][1]
-                if not check(self.KB, "S", self.explored, (r, c)):
+                if not check(self.KB, "S", self.explored, W(r, c)):
                     if self.perceptStatus:
                         self.addAction(f'check {(r, c)} do not have wumpus')
                     rev.append(idx)
@@ -423,7 +420,7 @@ class Agent:
                         self.addAction(f'check {(r, c)} have poison gas')
                     self.unexploreGas[idx] = []
                 else:
-                    if not check(self.KB, "W_H", self.explored, (r, c)):
+                    if not check(self.KB, "W_H", self.explored, PG(r, c)):
                         if self.perceptStatus:
                             self.addAction(f'check {(r, c)} do not have poison gas')
                         rev.append(idx)
@@ -470,7 +467,7 @@ class Agent:
                 if r >= 0 and r < self.size and c >= 0 and c < self.size:
                     if (r, c) in self.explored:
                         continue
-                    if not check(self.KB, 'B', self.explored, (r, c), False):
+                    if not check(self.KB, 'B', self.explored, Not(P(r, c))):
                         if (r, c) not in self.PerceptPit:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} have pit')
@@ -478,7 +475,7 @@ class Agent:
                             self.PerceptPit.append((r, c))
                             self.unexplorePit.append([])
                             self.predictMap[r][c] = min(self.predictMap[r][c] - 1, -1)
-                    elif check(self.KB, "B", self.explored, (r, c)):
+                    elif check(self.KB, "B", self.explored, P(r, c)):
                         if (r, c) not in self.PerceptPit:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} may have pit')
@@ -512,9 +509,9 @@ class Agent:
             r, c = [r0, r1, r2, r3], [c0, c1, c2, c3]
             PoGu = [[0, 0, 0, 0], [0, 0, 0, 0]]
             for i in range(4):
-                if not check(self.KB, 'G_L', self.explored, (r[i], c[i]), False):
+                if not check(self.KB, 'G_L', self.explored, Not(HP(r[i], c[i]))):
                     PoGu[0][i] = 1
-                if check(self.KB, 'G_L', self.explored, (r[i], c[i])):
+                if check(self.KB, 'G_L', self.explored, HP(r[i], c[i])):
                     PoGu[1][i] = 1
             changeflag = False
             if PoGu[0][0] == 0 and (PoGu[0][1] == 1 or PoGu[0][2] == 1 or PoGu[0][3] == 1):
@@ -573,14 +570,14 @@ class Agent:
                 if r >= 0 and r < self.size and c >= 0 and c < self.size:
                     if (r, c) in self.explored:
                         continue
-                    if not check(self.KB, 'W_H', self.explored, (r, c), False):
+                    if not check(self.KB, 'W_H', self.explored, Not(PG(r, c))):
                         if (r, c) not in self.PerceptGas:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} have poison gas')
                             changeflag = True
                             self.PerceptGas.append((r, c))
                             self.unexploreGas.append([])
-                    elif check(self.KB, "W_H", self.explored, (r, c)):
+                    elif check(self.KB, "W_H", self.explored, PG(r, c)):
                         if (r, c) not in self.PerceptGas:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} may have poison gas')
@@ -603,7 +600,7 @@ class Agent:
             r, c = self.predictPath[self.countMove]
             shootflag = True
             for _ in range(3):
-                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and not check(self.KB, 'S', self.explored, (r, c), False):
+                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and not check(self.KB, 'S', self.explored, Not(W(r, c))):
                     if self.perceptStatus:
                         self.addAction(f'check {(r, c)} have wumpus')
                     newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
@@ -620,8 +617,8 @@ class Agent:
                         break
                 else:
                     break
-            if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, (r, c)):
-                if not check(self.KB, 'S', self.explored, (r, c), False):
+            if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                if not check(self.KB, 'S', self.explored, Not(W(r, c))):
                     if self.perceptStatus:
                         self.addAction(f'check {(r, c)} still have wumpus')
                     self.PerceptWumpus.append((r, c))
@@ -636,7 +633,7 @@ class Agent:
                             break
                         shootflag = True
                         for _ in range(3):
-                            if check(self.KB, 'S', self.explored, (r, c)):
+                            if check(self.KB, 'S', self.explored, W(r, c)):
                                 if self.perceptStatus:
                                     self.addAction(f'check {(r, c)} may have wumpus')
                                 newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
@@ -653,8 +650,8 @@ class Agent:
                                     break
                             else:
                                 break
-                        if shootflag and check(self.KB, 'S', self.explored, (r, c)):
-                            if not check(self.KB, 'S', self.explored, (r, c), False):
+                        if shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                            if not check(self.KB, 'S', self.explored, Not(W(r, c))):
                                 if self.perceptStatus:
                                     self.addAction(f'check {(r, c)} still have wumpus')
                                 self.PerceptWumpus.append((r, c))
@@ -682,9 +679,9 @@ class Agent:
                             continue
                         shootflag = True
                         if (ri, ci) != (r, c):
-                            if not check(self.KB, 'S', self.explored, (ri, ci), False):
+                            if not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
                                 for _ in range(3):
-                                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and not check(self.KB, 'S', self.explored, (ri, ci), False):
+                                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
                                         if self.perceptStatus:
                                             self.addAction(f'check {(ri, ci)} have wumpus')
                                         newDirection = (ri - self.agentLocation[0], ci - self.agentLocation[1])
@@ -701,16 +698,16 @@ class Agent:
                                             break
                                     else:
                                         break
-                                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and not check(self.KB, 'S', self.explored, (ri, ci), False):
+                                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and not check(self.KB, 'S', self.explored, Not(W(ri, ci))):
                                     if self.perceptStatus:
                                         self.addAction(f'check {(ri, ci)} still have wumpus')
                                     self.PerceptWumpus.append((ri, ci))
                                     self.unexploreWumpus.append([])
                                     self.predictMap[ri][ci] = min(self.predictMap[ri][ci] - 1, -1)
-                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, (r, c)):
+                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, W(r, c)):
                         shootflag = True
                         for _ in range(3):
-                            if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, (r, c)):
+                            if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, W(r, c)):
                                 if self.perceptStatus:
                                     self.addAction(f'check {(r, c)} may have wumpus')
                                 newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
@@ -727,7 +724,7 @@ class Agent:
                                     break
                             else:
                                 break
-                        if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, (r, c)):
+                        if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} may have wumpus')
                             unexplore = []
@@ -749,7 +746,7 @@ class Agent:
                                     break
                                 shootflag = True
                                 for _ in range(3):
-                                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, (r, c)):
+                                    if 'S' in self.WumpusWorld.getObject(self.agentLocation) and check(self.KB, 'S', self.explored, W(r, c)):
                                         if self.perceptStatus:
                                             self.addAction(f'check {(r, c)} may have wumpus')
                                         newDirection = (r - self.agentLocation[0], c - self.agentLocation[1])
@@ -766,8 +763,8 @@ class Agent:
                                             break
                                     else:
                                         break
-                                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, (r, c)):
-                                    if not check(self.KB, 'S', self.explored, (r, c), False):
+                                if 'S' in self.WumpusWorld.getObject(self.agentLocation) and shootflag and check(self.KB, 'S', self.explored, W(r, c)):
+                                    if not check(self.KB, 'S', self.explored, Not(W(r, c))):
                                         if self.perceptStatus:
                                             self.addAction(f'check {(r, c)} still have wumpus')
                                         self.PerceptWumpus.append((r, c))

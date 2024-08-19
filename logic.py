@@ -39,7 +39,7 @@ ExistWH = ForAll([x, y, x1, y1], Implies(And(PG(x, y), Adjacent(x, y, x1, y1)), 
 ExistHP = ForAll([x, y], Implies(GL(x, y), Exists([x1, y1], And(Adjacent(x, y, x1, y1), HP(x1, y1)))))
 ExistGL = ForAll([x, y, x1, y1], Implies(And(HP(x, y), Adjacent(x, y, x1, y1)), GL(x1, y1)))
 
-def check(agentKB, key, exploredCell, checkCell, flag=True):
+def check(agentKB, key, exploredCell, sentence):
     kb = Solver()
     kb.reset()
     sign = {
@@ -58,21 +58,18 @@ def check(agentKB, key, exploredCell, checkCell, flag=True):
         "G_L": ["H_P", ExistHP, ExistGL],
         "W_H": ["P_G", ExistPG, ExistWH]
     }
-    dirs = [(1, 0), (0, 1), (-1, 0), (0, -1)]
     kb.add(obj[key][1])
     kb.add(obj[key][2])
     threatKey = obj[key][0]
-    for dir in dirs:
-        r, c = checkCell[0] + dir[0], checkCell[1] + dir[1]
-        if 0 <= r and r < SIZE and 0 <= c and c < SIZE:
-            if (r, c) in exploredCell:
-                if (r, c) in agentKB[key]:
-                    kb.add(sign[key](r, c))
-                else:
-                    kb.add(Not(sign[key](r, c)))
-    if flag:
-        kb.add(sign[threatKey](checkCell[0], checkCell[1]))
-    else: 
-        kb.add(Not(sign[threatKey](checkCell[0], checkCell[1])))
+    for cell in exploredCell:
+        if cell in agentKB[threatKey]:
+            kb.add(sign[threatKey](cell[0], cell[1]))
+        else:
+            kb.add(Not(sign[threatKey](cell[0], cell[1])))
+        if cell in agentKB[key]:
+            kb.add(sign[key](cell[0], cell[1]))
+        else:
+            kb.add(Not(sign[key](cell[0], cell[1])))
+    kb.add(sentence)
     return kb.check() == sat
 
