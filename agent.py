@@ -4,7 +4,7 @@ from logic import *
 DIRECTION = [(-1, 0), (0, 1), (1, 0), (0, -1)]
 
 class Agent:
-    def __init__(self, inputFile="map2.txt"):
+    def __init__(self, inputFile="map1.txt"):
         self.WumpusWorld = Program(inputFile)
         _, self.start, self.size = self.WumpusWorld.StartingStateRepresentation()
         self.agentPercept = [[None for _ in range(self.size)] for _ in range(self.size)]
@@ -40,6 +40,7 @@ class Agent:
         self.unexploreGas = []
         self.unexplorePotion = []
         self.unexploreWumpus = []
+        self.unexploreIdx = [[[[], [], []] for _ in range(self.size)] for _ in range(self.size)]
         self.potemp = []
         
         self.maxExplored = self.size * self.size
@@ -55,7 +56,8 @@ class Agent:
                     self.agentPercept[i][j] = self.WumpusWorld.getObject((i, j))
                     
     def addAction(self, action):
-        self.action.append((self.agentPercept, self.agentLocation, self.agentDirection, self.score, self.agentHP, self.gold, self.potion, action))
+        agentPercept = copy.deepcopy(self.agentPercept)
+        self.action.append((agentPercept, self.agentLocation, self.agentDirection, self.score, self.agentHP, self.gold, self.potion, action))
         
     def turnRight(self):
         self.addAction('turn right')
@@ -95,8 +97,8 @@ class Agent:
     def shoot(self):
         temp = (self.agentLocation[0] + self.agentDirection[0], self.agentLocation[1] + self.agentDirection[1])
         if temp[0] >= 0 and temp[0] < self.size and temp[1] >= 0 and temp[1] < self.size:
-            self.score -= 100
             self.addAction('shoot')
+            self.score -= 100
             result, cell = self.WumpusWorld.AgentShoot(temp)
             if result == "SCREAM":
                 self.addAction('SCREAM')
@@ -194,6 +196,8 @@ class Agent:
                     NcurS = curS + 20
                 elif DIRECTION[i][0] + curD[0] + DIRECTION[i][1] + curD[1] == 0:
                     NcurS = curS + 30
+                if NcurS > scoreTemp:
+                    continue
                 if (neighborX, neighborY) in self.PerceptGas:
                     if curO > 0 and curH <= 50:
                         NcurO = curO - 1
@@ -480,8 +484,8 @@ class Agent:
                                 self.addAction(f'check {(r, c)} may have pit')
                             changeflag = True
                             unexplore = []
-                            for u in range(-2, 3):
-                                for v in range(-2, 3):
+                            for u in range(-1, 2):
+                                for v in range(-1, 2):
                                     if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                         continue
                                     if (r + u, c + v) not in self.explored:
@@ -582,8 +586,8 @@ class Agent:
                                 self.addAction(f'check {(r, c)} may have poison gas')
                             changeflag = True
                             unexplore = []
-                            for u in range(-2, 3):
-                                for v in range(-2, 3):
+                            for u in range(-1, 2):
+                                for v in range(-1, 2):
                                     if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                         continue
                                     if (r + u, c + v) not in self.explored:
@@ -660,8 +664,8 @@ class Agent:
                                 if self.perceptStatus:
                                     self.addAction(f'check {(r, c)} may have wumpus')
                                 unexplore = []
-                                for u in range(-2, 3):
-                                    for v in range(-2, 3):
+                                for u in range(-1, 2):
+                                    for v in range(-1, 2):
                                         if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                             continue
                                         if (r + u, c + v) not in self.explored:
@@ -727,8 +731,8 @@ class Agent:
                             if self.perceptStatus:
                                 self.addAction(f'check {(r, c)} may have wumpus')
                             unexplore = []
-                            for u in range(-2, 3):
-                                for v in range(-2, 3):
+                            for u in range(-1, 2):
+                                for v in range(-1, 2):
                                     if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                         continue
                                     if (r + u, c + v) not in self.explored:
@@ -773,8 +777,8 @@ class Agent:
                                         if self.perceptStatus:
                                             self.addAction(f'check {(r, c)} may have wumpus')
                                         unexplore = []
-                                        for u in range(-2, 3):
-                                            for v in range(-2, 3):
+                                        for u in range(-1, 2):
+                                            for v in range(-1, 2):
                                                 if r + u < 0 or r + u >= self.size or c + v < 0 or c + v >= self.size:
                                                     continue
                                                 if (r + u, c + v) not in self.explored:
