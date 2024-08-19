@@ -131,6 +131,22 @@ class GUI:
             posx = posX + (self.cellW - img.get_rect().size[0])/2
             posy = posY + (self.cellH - img.get_rect().size[1])/2
             self.screen.blit(img, (posx, posy))
+
+        posY     += 100 + 2
+
+        if (action.lower() == "climb up"):
+            escapeText = font.render(f"Agent escaped!!!", True, (0,0,0))
+            eraser.topleft = (posX, posY)
+            pg.draw.rect(self.screen, (160,160,160), eraser)
+            self.screen.blit(escapeText, (posX, posY))
+            posY += escapeText.get_rect().size[1] + 2
+        
+        if (str(agentHP) == "0"):
+            deathText = font.render(f"Agent failed!!!", True, (0,0,0))
+            eraser.topleft = (posX, posY)
+            pg.draw.rect(self.screen, (160,160,160), eraser)
+            self.screen.blit(deathText, (posX, posY))
+            posY += deathText.get_rect().size[1] + 2
         pg.display.flip()
     def drawItemInCell(self, location, items):
         posx = self.board[0] + location[1]*(self.cellW) + (self.cellW - self._nothing.get_rect().size[0])/2
@@ -260,7 +276,9 @@ def main():
     filename = input("Path to input map: ")
     while True:
         try:
+            print("Initializing the GUI")
             sim = GUI(filename)
+            print("Run the simulation")
             sim.run()
         except:
             print("File invalid!!!!")
