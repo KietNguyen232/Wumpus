@@ -72,7 +72,7 @@ class GUI:
             case "G_L": 
                 return self._glow
         return self._nothing
-    def showStatus(self, score, agentHP, gold, potion, action):
+    def showStatus(self, score, agentHP, gold, potion, action, percepts):
         offsetX, offsetY, width, height = self.statusCell
         posX = offsetX + 16
         posY = offsetY + 100
@@ -105,12 +105,31 @@ class GUI:
         temp = str(action)
         if (temp == "SCREAM"):
             temp = "Hear scream"
-        actionText = font.render(f"Action: {str(temp)}", True, (0,0,0))
+        actionText = font.render(f"Action:", True, (0,0,0))
         eraser.topleft = (posX, posY)
         pg.draw.rect(self.screen, (160,160,160), eraser)
         self.screen.blit(actionText, (posX, posY))
         posY += actionText.get_rect().size[1] + 2
 
+        actionText = font.render(f"{str(temp)}", True, (0,0,0))
+        eraser.topleft = (posX, posY)
+        pg.draw.rect(self.screen, (160,160,160), eraser)
+        self.screen.blit(actionText, (posX, posY))
+        posY += actionText.get_rect().size[1] + 2
+
+
+        itemText = font.render(f"Items in cell:", True, (0,0,0))
+        eraser.topleft = (posX, posY)
+        pg.draw.rect(self.screen, (160,160,160), eraser)
+        self.screen.blit(itemText, (posX, posY))
+        posY += itemText.get_rect().size[1] + 2
+
+        self.screen.blit(self._nothing, (posX, posY))
+        for i in range(len(percepts)):
+            img = self.getProperpyImage(percepts[i])
+            posx = posX + (self.cellW - img.get_rect().size[0])/2
+            posy = posY + (self.cellH - img.get_rect().size[1])/2
+            self.screen.blit(img, (posx, posy))
         pg.display.flip()
     def drawItemInCell(self, location, items):
         posx = self.board[0] + location[1]*(self.cellW) + (self.cellW - self._nothing.get_rect().size[0])/2
@@ -221,7 +240,7 @@ class GUI:
                     self.drawPerceptInfo(agentPos, actionList[actionListIndex][0])
                     self.showStatus(actionList[actionListIndex][3], actionList[actionListIndex][4], 
                                     actionList[actionListIndex][5], actionList[actionListIndex][6],
-                                    actionList[actionListIndex][7])
+                                    actionList[actionListIndex][7], actionList[actionListIndex][0][agentPos[0]][agentPos[1]])
                     oldPos = actionList[actionListIndex][1]
                     actionListIndex += 1
                     if not flag:
