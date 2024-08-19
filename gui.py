@@ -2,6 +2,7 @@ import pygame as pg
 import program
 import sys
 import agent 
+from copy import deepcopy
 pg.font.init()
 pg.display.init()
 class GUI:
@@ -202,8 +203,10 @@ class GUI:
     def run(self): 
         run = True
         flag = True
+        stopNextLoop = 0
         review = False
         actionListIndex = 0
+        initialAction = deepcopy(self.agent.action)
         self.screen.blit(self._review, (0,0))
         self.agent.agentLogic()
         # agentPercept, agentLocation, agentDirection, score, agentHP, gold, potion, action 
@@ -222,18 +225,24 @@ class GUI:
                         review = True
                         continue
             if (not run):
+                print("Quit by pygame")
                 pg.quit()
+                return
             if (review):
                 if actionListIndex >= len(actionList):
-                    flag = self.agent.agentLogic()
-                    actionList = self.agent.action
-                    actionListIndex = 0
+                    if flag:
+                        flag = self.agent.agentLogic()
+                        # print("Get flag" + str(flag))
+                        actionList = self.agent.action
+                        actionListIndex = 0
+                    # elif not stopNextLoop and not flag:
+                    #     stopNextLoop = True
+                    #     continue
                 else:
                     agentPos = actionList[actionListIndex][1]
                     # print(actionList[actionListIndex])
-                    
-                    print(actionList[actionListIndex][0][agentPos[0]][agentPos[1]])
-                    print("===================================")
+                    # print(actionList[actionListIndex][0][agentPos[0]][agentPos[1]])
+                    # print("===================================")
                     if oldPos !=  (-1,-1):
                         self.drawAgent(oldPos, (-1, -1))
                     self.drawAgent(actionList[actionListIndex][1], actionList[actionListIndex][2])
@@ -243,8 +252,7 @@ class GUI:
                                     actionList[actionListIndex][7], actionList[actionListIndex][0][agentPos[0]][agentPos[1]])
                     oldPos = actionList[actionListIndex][1]
                     actionListIndex += 1
-                    if not flag:
-                        run = False
+                     
             pg.display.flip()
             pg.time.Clock().tick(4)
                 
@@ -260,6 +268,6 @@ def main():
         if (filename.lower() == 'q'):
             sys.exit()
 
-# main()
-sim = GUI("map1.txt")
-sim.run()
+main()
+# sim = GUI("map1.txt")
+# sim.run()
